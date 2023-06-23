@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.List;
 
 import static ml.konstanius.minecicd.MineCICD.busy;
 
@@ -148,8 +149,10 @@ public class BaseCommand implements CommandExecutor {
                     return true;
                 }
 
-                String status = GitManager.getStatus();
-                sender.sendRichMessage(status);
+                String[] lines = GitManager.getStatus();
+                for (String line : lines) {
+                    sender.sendRichMessage(line);
+                }
                 return true;
             }
             default -> {

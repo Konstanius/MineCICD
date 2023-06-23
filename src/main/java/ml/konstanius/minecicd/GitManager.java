@@ -264,8 +264,15 @@ public abstract class GitManager {
         }
     }
 
-    public static String getStatus() {
-        // TODO
-        return "";
+    public static String[] getStatus() {
+        String branch = Config.getString("branch");
+        String lastCommit = Config.getString("last-commit");
+        String repositoryUrl = Config.getString("repository-url");
+
+        return new String[]{
+                "MineCICD is operating on branch " + branch,
+                "Repository is " + repositoryUrl,
+                "Last commit: " + (lastCommit.isEmpty() ? "None" : lastCommit),
+        };
     }
 }
