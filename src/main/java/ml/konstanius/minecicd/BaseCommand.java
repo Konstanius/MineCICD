@@ -4,6 +4,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.jetbrains.annotations.NotNull;
 
@@ -14,8 +15,7 @@ import java.util.Arrays;
 import java.util.Calendar;
 
 import static ml.konstanius.minecicd.Messages.sendManagementMessage;
-import static ml.konstanius.minecicd.MineCICD.busy;
-import static ml.konstanius.minecicd.MineCICD.plugin;
+import static ml.konstanius.minecicd.MineCICD.*;
 
 public class BaseCommand implements CommandExecutor {
 
@@ -245,6 +245,28 @@ public class BaseCommand implements CommandExecutor {
                             String left = page == 1 ? "<- (Beginning)" : " <blue><u><click:run_command:git log " + (page - 1) + "><- ("+ (page - 1) +") </click></u></blue>";
                             String right = page == maxPage ? "(End) ->" : " <blue><u><click:run_command:git log " + (page + 1) + " >("+ (page + 1) +") -></click></u></blue> > ";
                             sender.sendRichMessage("===== " + left + " | " + right + " =====");
+                        }
+                    }
+                    case "mute" -> {
+                        if (args.length != 2) {
+                            sender.sendRichMessage("Invalid arguments. Usage: /MineCICD mute <true / false>");
+                            return;
+                        }
+
+                        // if not player
+                        if (!(sender instanceof Player)) {
+                            sender.sendRichMessage("You must be a player to use this command");
+                            return;
+                        }
+
+                        boolean mute = Boolean.parseBoolean(args[1]);
+                        String uuid = ((Player) sender).getUniqueId().toString();
+                        if (mute) {
+                            sender.sendRichMessage("Muted MineCICD messages");
+                            muteList.add(uuid);
+                        } else {
+                            sender.sendRichMessage("Unmuted MineCICD messages");
+                            muteList.remove(uuid);
                         }
                     }
                     default -> {

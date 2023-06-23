@@ -41,7 +41,21 @@ blacklist-paths:
 # Configuration for the messages
 # TODO
 
-# Reload configuration
+# Webhook listener configuration
+# minecicd.notify is used for identifying who to notify when a webhook event is received
+# Order of execution:
+# 1. Commands are executed with operator permissions
+# 2. One of the following is executed (in this order):
+#   - restart
+#   - global reload
+#   - individual reload
+allow-commands: true # This allows to execute commands on the server, it is recommended to disable this on production servers
 allow-individual-reload: true # This might not work with all plugins, issues will be displayed in the console. It is recommended to disable this on production servers
 allow-global-reload: false # This is highly discouraged, as it can cause issues with many plugins
 allow-restart: true
+# Webhook actions can be used by adding commit messages in the following format:
+# CICD <restart>
+# CICD <global-reload>
+# CICD <reload> <plugin-name> (Multiple plugins can be specified)
+# CICD <run> <command> (Multiple commands can be specified)
+# <any other commit message>

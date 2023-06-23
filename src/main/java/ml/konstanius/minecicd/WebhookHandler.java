@@ -22,7 +22,7 @@ public class WebhookHandler implements HttpHandler {
         StringBuilder sb = new StringBuilder();
         InputStream ios = t.getRequestBody();
         int i;
-        int max = 10000; // prevent DoS
+        int max = 10000;
         while ((i = ios.read()) != -1 && max-- > 0) {
             sb.append((char) i);
         }
@@ -70,19 +70,45 @@ public class WebhookHandler implements HttpHandler {
 
                 String[] lines = message.split("\n");
                 ArrayList<String> individualReload = new ArrayList<>();
+                ArrayList<String> commands = new ArrayList<>();
                 boolean globalReload = false;
                 boolean restart = false;
                 for (String line : lines) {
                     if (line.startsWith("CICD")) {
                         String command = line.substring(4).trim();
-                        if (command.equals("reload") && allowIndividualReload) {
+                        if (command.startsWith("reload") && allowIndividualReload) {
                             String plugin = line.substring(10).trim();
                             individualReload.add(plugin);
-                        } else if (command.equals("global-reload")) {
+                        } else if (command.startsWith("global-reload")) {
                             globalReload = allowGlobalReload;
-                        } else if (command.equals("restart")) {
+                        } else if (command.startsWith("restart")) {
                             restart = allowRestart;
+                        } else if (command.startsWith("run")) {
+                            String cmd = line.substring(7).trim();
+                            commands.add(cmd);
                         }
+                    }
+                }
+
+                String mainAction;
+                if (restart) {
+                    mainAction = "Server Restart";
+                } else if (globalReload) {
+                    mainAction = "Global Reload";
+                } else if (!individualReload.isEmpty()) {
+                    mainAction = "Plugin Reload";
+                } else {
+                    mainAction = "No Action";
+                }
+                String commit = json.getJSONObject("head_commit").getString("id");
+                Messages.presentWebhookCommit(pusher, message, mainAction, commit, commands);
+
+                // run the commands with all permissions
+                for (String cmd : commands) {
+                    try {
+                        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "sudo " + cmd);
+                    } catch (Exception e) {
+                        e.printStackTrace();
                     }
                 }
 
@@ -104,7 +130,7 @@ public class WebhookHandler implements HttpHandler {
                         }
                     }
                 }
-            } catch (IOException | GitAPIException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
 

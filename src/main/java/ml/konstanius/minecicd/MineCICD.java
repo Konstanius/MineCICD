@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.InetSocketAddress;
 import java.net.URL;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -22,6 +23,7 @@ public final class MineCICD extends JavaPlugin {
     public static HttpServer webServer;
     public static boolean busy = false;
     public static Plugin plugin;
+    public static HashSet<String> muteList = new HashSet<>();
 
     @Override
     public void onEnable() {
