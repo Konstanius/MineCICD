@@ -104,7 +104,24 @@ public class BaseCommand implements CommandExecutor {
                     int amount = FilesManager.addPath(file, message, sender.getName());
                     sender.sendRichMessage("Added " + amount + " file(s) successfully");
                 } catch (IOException | GitAPIException e) {
-                    sender.sendRichMessage("Error adding file: " + e.getMessage());
+                    sender.sendRichMessage("Error adding file(s): " + e.getMessage());
+                    e.printStackTrace();
+                }
+                return true;
+            }
+            case "remove" -> {
+                if (args.length < 3) {
+                    sender.sendRichMessage("Invalid arguments. Usage: /MineCICD remove <file / 'directory/'> <message> (trailing slash is required for directories)");
+                    return true;
+                }
+
+                String file = args[1];
+                String message = String.join(" ", Arrays.copyOfRange(args, 2, args.length));
+                try {
+                    int amount = FilesManager.removePath(file, message, sender.getName());
+                    sender.sendRichMessage("Removed " + amount + " file(s) successfully");
+                } catch (IOException | GitAPIException e) {
+                    sender.sendRichMessage("Error removing file(s): " + e.getMessage());
                     e.printStackTrace();
                 }
                 return true;
@@ -123,6 +140,16 @@ public class BaseCommand implements CommandExecutor {
                     sender.sendRichMessage("Error cloning repo: " + e.getMessage());
                     e.printStackTrace();
                 }
+                return true;
+            }
+            case "status" -> {
+                if (args.length != 1) {
+                    sender.sendRichMessage("Invalid arguments. Usage: /MineCICD status");
+                    return true;
+                }
+
+                String status = GitManager.getStatus();
+                sender.sendRichMessage(status);
                 return true;
             }
             default -> {

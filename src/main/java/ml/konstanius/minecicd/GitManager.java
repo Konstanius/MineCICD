@@ -3,11 +3,13 @@ package ml.konstanius.minecicd;
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.PullResult;
+import org.eclipse.jgit.api.RmCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import java.util.logging.Level;
 
 import static ml.konstanius.minecicd.MineCICD.*;
@@ -190,10 +192,49 @@ public abstract class GitManager {
 
             String repoPath = plugin.getDataFolder().getAbsolutePath() + "/repo";
 
-            String filePath = file.getAbsolutePath().replace(repoPath, "");
-
             try (Git git = Git.open(new File(repoPath))) {
                 git.add().addFilepattern(".").call();
+                git.commit().setMessage(message + "\nUser: " + playerName).call();
+                git.push().setCredentialsProvider(new UsernamePasswordCredentialsProvider(token, "")).call();
+                String newCommit = git.log().call().iterator().next().getName();
+                Config.set("last-commit", newCommit);
+                Config.save();
+            }
+        } finally {
+            if (ownsBusy) {
+                busy = false;
+            }
+        }
+    }
+
+    /**
+     * Remove a file / directory from the repo
+     * @param files files / directories to remove
+     * @throws IOException if repo folder does not exist
+     * @throws GitAPIException if git rm fails
+     */
+    public static void remove(List<File> files, String message, String playerName) throws IOException, GitAPIException {
+        boolean ownsBusy = !busy;
+        busy = true;
+        try {
+            pullRepo();
+
+            FilesManager.gitSanitizer();
+
+            String token = Config.getString("token");
+
+            String repoPath = plugin.getDataFolder().getAbsolutePath() + "/repo";
+
+            try (Git git = Git.open(new File(repoPath))) {
+                RmCommand rm = git.rm();
+                for (File file : files) {
+                    String filePath = file.getAbsolutePath().replace(repoPath, "");
+                    if (filePath.startsWith("/")) {
+                        filePath = filePath.substring(1);
+                    }
+                    rm.addFilepattern(filePath);
+                }
+                rm.call();
                 git.commit().setMessage(message + "\nUser: " + playerName).call();
                 git.push().setCredentialsProvider(new UsernamePasswordCredentialsProvider(token, "")).call();
                 String newCommit = git.log().call().iterator().next().getName();
@@ -211,11 +252,20 @@ public abstract class GitManager {
         boolean ownsBusy = !busy;
         busy = true;
         try (Git git = Git.open(new File(plugin.getDataFolder().getAbsolutePath() + "/repo"))){
-            git.checkout().setName(Config.getString("branch")).call();
+            try {
+                git.checkout().setName(Config.getString("branch")).call();
+            } catch (Exception ignored) {
+                git.checkout().setCreateBranch(true).setName(Config.getString("branch")).call();
+            }
         } finally {
             if (ownsBusy) {
                 busy = false;
             }
         }
+    }
+
+    public static String getStatus() {
+        // TODO
+        return "";
     }
 }

@@ -8,10 +8,7 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.file.FileVisitResult;
-import java.nio.file.FileVisitor;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -271,11 +268,6 @@ public abstract class FilesManager {
                 try (Git git = Git.open(new File(plugin.getDataFolder().getAbsolutePath() + "/repo"))) {
                     RmCommand rm = git.rm();
                     for (String deletedFile : deletedFiles) {
-//                        // make sure the beginning is "./"
-//                        if (deletedFile.startsWith("/")) {
-//                            deletedFile = deletedFile.substring(1);
-//                        }
-//                        deletedFile = "./" + deletedFile;
                         rm.addFilepattern(deletedFile);
                     }
                     rm.call();
@@ -397,6 +389,73 @@ public abstract class FilesManager {
         }
     }
 
+    public static int removePath(String path, String message, String playerName) throws IOException, GitAPIException {
+        boolean ownsBusy = !busy;
+        busy = true;
+        try {
+            File repo = new File(plugin.getDataFolder().getAbsolutePath() + "/repo");
+            if (!repo.exists()) {
+                throw new FileNotFoundException("repo folder does not exist");
+            }
+            File file = new File(repo.getAbsolutePath() + "/" + path);
+            if (!file.exists()) {
+                System.out.println("1 does not exist");
+            }
+
+            mergeToGit();
+            if (!file.exists()) {
+                System.out.println("2 does not exist");
+            }
+
+            gitSanitizer();
+            if (!file.exists()) {
+                System.out.println("3 does not exist");
+            }
+
+            // count the number of files to be deleted
+            int count = countFiles(new File(repo.getAbsolutePath() + "/" + path));
+
+            // get the path of all files and directories to be deleted
+            List<File> files = new ArrayList<>();
+
+            if (!file.exists()) {
+                throw new FileNotFoundException("file does not exist");
+            }
+
+            if (!file.isDirectory()) {
+                files.add(file);
+            } else  {
+                // walk through the directory and add all files to the list
+                Files.walkFileTree(new File(repo.getAbsolutePath() + "/" + path).toPath(), new SimpleFileVisitor<>() {
+                    @Override
+                    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
+                        files.add(file.toFile());
+                        return FileVisitResult.CONTINUE;
+                    }
+                });
+            }
+
+            // add to git
+            GitManager.remove(files, message, playerName);
+
+            if (new File(repo.getAbsolutePath() + "/" + path).isDirectory()) {
+                // delete the directory
+                FileUtils.deleteDirectory(new File(repo.getAbsolutePath() + "/" + path));
+            } else {
+                // delete the file
+                FileUtils.deleteQuietly(new File(repo.getAbsolutePath() + "/" + path));
+            }
+
+            generatePreviousFiles();
+
+            return count;
+        } finally {
+            if (ownsBusy) {
+                busy = false;
+            }
+        }
+    }
+
     public static int countFiles(File path) {
         // skip .git folder
         if (path.getAbsolutePath().contains("/.git/")) {
@@ -404,8 +463,13 @@ public abstract class FilesManager {
         }
 
         // skip if contains "/plugins/MineCICD/"
-        if (path.getAbsolutePath().contains("/plugins/MineCICD/")) {
+        if (path.getAbsolutePath().contains("/plugins/MineCICD/") && !path.getAbsolutePath().contains("/plugins/MineCICD/repo/")) {
             return 0;
+        }
+
+        // if file, return 1
+        if (!path.isDirectory()) {
+            return 1;
         }
 
         int count = 0;
