@@ -1,0 +1,19 @@
+name: MineCICD
+version: '${version}'
+main: ml.konstanius.minecicd.MineCICD
+api-version: '1.20'
+prefix: MineCICD
+load: STARTUP
+authors: [Konstanius]
+description: A CI/CD plugin for Minecraft Spigot Servers to speed up development processes
+website: http://konstanius.ml/
+
+commands:
+  minecicd:
+    description: "Main command for MineCICD"
+    aliases:
+      - mcicd
+      - cicd
+      - git
+      - github
+    usage: /minecicd [clone|pull|push|add|reload|help]

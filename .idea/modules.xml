@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/IdeaProjects.MineCICD.main.iml" filepath="$PROJECT_DIR$/.idea/modules/IdeaProjects.MineCICD.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/MineCICD.main.iml" filepath="$PROJECT_DIR$/.idea/modules/MineCICD.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/ml.konstanius.MineCICD.main.iml" filepath="$PROJECT_DIR$/.idea/modules/ml.konstanius.MineCICD.main.iml" />
+    </modules>
+  </component>
+</project>
