@@ -2,10 +2,8 @@ package ml.konstanius.minecicd;
 
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
-import org.apache.maven.model.PluginManagement;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
-import org.bukkit.plugin.PluginManager;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.json.JSONObject;
 
@@ -13,7 +11,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.logging.Level;
 
 import static ml.konstanius.minecicd.MineCICD.busy;
@@ -72,7 +69,7 @@ public class WebhookHandler implements HttpHandler {
                 boolean allowRestart = Config.getBoolean("allow-restart");
 
                 String[] lines = message.split("\n");
-                List<String> individualReload = new ArrayList<>();
+                ArrayList<String> individualReload = new ArrayList<>();
                 boolean globalReload = false;
                 boolean restart = false;
                 for (String line : lines) {

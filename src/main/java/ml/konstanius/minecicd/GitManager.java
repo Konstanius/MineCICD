@@ -1,8 +1,6 @@
 package ml.konstanius.minecicd;
 
-import com.google.common.collect.Iterables;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.ArrayUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.PullResult;
 import org.eclipse.jgit.api.ResetCommand;
@@ -14,7 +12,7 @@ import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.List;
+import java.util.Calendar;
 import java.util.logging.Level;
 
 import static ml.konstanius.minecicd.MineCICD.*;
@@ -219,7 +217,7 @@ public abstract class GitManager {
      * @throws IOException     if repo folder does not exist
      * @throws GitAPIException if git rm fails
      */
-    public static void remove(List<File> files, String message, String playerName) throws IOException, GitAPIException {
+    public static void remove(ArrayList<File> files, String message, String playerName) throws IOException, GitAPIException {
         boolean ownsBusy = !busy;
         busy = true;
         try {
@@ -285,7 +283,7 @@ public abstract class GitManager {
     public static void reset(String commit) throws IOException, GitAPIException {
         boolean ownsBusy = !busy;
         busy = true;
-        try  {
+        try {
             // Reset the branch to a specific commit
             if (commit.startsWith("http")) {
                 commit = commit.substring(commit.lastIndexOf("/") + 1);
@@ -345,7 +343,7 @@ public abstract class GitManager {
     }
 
     public static String[] getLog() {
-        List<String> log = new ArrayList<>();
+        ArrayList<String> log = new ArrayList<>();
 
         try {
             pullRepo();
@@ -357,7 +355,7 @@ public abstract class GitManager {
             try (Git git = Git.open(new File(repoPath))) {
                 Iterable<RevCommit> commits = git.log().call();
                 for (RevCommit commit : commits) {
-                    String mini = "<blue><u><click:copy_to_clipboard:" + commit.getName() + ">" + commit.getName() + "</click></u></blue> - " + commit.getShortMessage();
+                    String mini = "<blue><u><click:copy_to_clipboard:" + commit.getName() + ">" + commit.getName() + "</click></u></blue> on " + commit.getAuthorIdent().getWhen() + " : " + commit.getShortMessage();
                     log.add(mini);
                 }
             }
@@ -365,5 +363,44 @@ public abstract class GitManager {
         }
 
         return log.toArray(new String[0]);
+    }
+
+    public static void rollback(Calendar date) throws IOException, GitAPIException {
+        boolean ownsBusy = !busy;
+        busy = true;
+        try {
+            // get the latest commit before the date
+            String commit = null;
+
+            pullRepo();
+
+            FilesManager.gitSanitizer();
+
+            String repoPath = plugin.getDataFolder().getAbsolutePath() + "/repo";
+
+            try (Git git = Git.open(new File(repoPath))) {
+                Iterable<RevCommit> commits = git.log().call();
+                for (RevCommit c : commits) {
+                    if (c.getAuthorIdent().getWhen().before(date.getTime())) {
+                        commit = c.getName();
+                        break;
+                    }
+                }
+            }
+
+            if (commit == null) {
+                throw new IOException("No commit found before the specified date");
+            }
+
+            if (commit.equals(Config.getString("last-commit"))) {
+                throw new IOException("The commit found is the last commit");
+            }
+
+            reset(commit);
+        } finally {
+            if (ownsBusy) {
+                busy = false;
+            }
+        }
     }
 }

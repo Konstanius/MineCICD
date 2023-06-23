@@ -1,6 +1,8 @@
 package ml.konstanius.minecicd;
 
-import java.util.List;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
 
 public abstract class Config {
     public static String getString(String path) {
@@ -15,8 +17,8 @@ public abstract class Config {
         return MineCICD.config.getBoolean(path);
     }
 
-    public static List<String> getStringList(String path) {
-        return MineCICD.config.getStringList(path);
+    public static @NotNull ArrayList<String> getStringList(String path) {
+        return (ArrayList<String>) MineCICD.config.getStringList(path);
     }
 
     public static void set(String path, Object value) {
@@ -34,7 +36,7 @@ public abstract class Config {
     }
 
     public static void addToList(String path, String value) {
-        List<String> whitelist = getStringList(path);
+        ArrayList<String> whitelist = getStringList(path);
         if (!whitelist.contains(value)) {
             whitelist.add(value);
             set(path, whitelist);

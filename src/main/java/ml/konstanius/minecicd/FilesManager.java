@@ -12,7 +12,6 @@ import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 
 import static ml.konstanius.minecicd.MineCICD.logger;
 import static ml.konstanius.minecicd.MineCICD.plugin;
@@ -77,7 +76,7 @@ public abstract class FilesManager {
         }
     }
 
-    static List<String> getPreviousFiles() throws IOException {
+    static ArrayList<String> getPreviousFiles() throws IOException {
         boolean ownsBusy = !busy;
         busy = true;
         try {
@@ -86,7 +85,7 @@ public abstract class FilesManager {
                 generatePreviousFiles();
             }
 
-            return FileUtils.readLines(previousFilesFile, "UTF-8");
+            return (ArrayList<String>) FileUtils.readLines(previousFilesFile, "UTF-8");
         } finally {
             if (ownsBusy) {
                 busy = false;
@@ -111,12 +110,12 @@ public abstract class FilesManager {
                 rootPath += "/";
             }
 
-            List<String> changedFiles = new ArrayList<>();
+            ArrayList<String> changedFiles = new ArrayList<>();
 
-            List<String> newFiles = new ArrayList<>();
+            ArrayList<String> newFiles = new ArrayList<>();
 
             String finalRootPath = rootPath;
-            List<String> finalPreviousFiles = getPreviousFiles();
+            ArrayList<String> finalPreviousFiles = getPreviousFiles();
             Files.walkFileTree(path.toPath(), new FileVisitor<>() {
                 @Override
                 public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
@@ -222,15 +221,15 @@ public abstract class FilesManager {
                 rootPath += "/";
             }
 
-            List<String> repoFiles = getPreviousFiles();
+            ArrayList<String> repoFiles = getPreviousFiles();
 
             String repoPath = path.getAbsolutePath();
             if (!repoPath.endsWith("/")) {
                 repoPath += "/";
             }
 
-            List<String> changedFiles = new ArrayList<>();
-            List<String> deletedFiles = new ArrayList<>();
+            ArrayList<String> changedFiles = new ArrayList<>();
+            ArrayList<String> deletedFiles = new ArrayList<>();
 
             // iterate over the repoFiles, copy or delete from server to repo
             for (String repoFileString : repoFiles) {
@@ -293,16 +292,16 @@ public abstract class FilesManager {
 
             // check that the file / directory is not blacklisted
             boolean enableBlacklistFiletypes = Config.getBoolean("enable-blacklist-filetypes");
-            List<String> blockedTypes = Config.getStringList("blacklist-filetypes");
+            ArrayList<String> blockedTypes = Config.getStringList("blacklist-filetypes");
 
             boolean enableBlacklistPaths = Config.getBoolean("enable-blacklist-paths");
-            List<String> blockedPaths = Config.getStringList("blacklist-paths");
+            ArrayList<String> blockedPaths = Config.getStringList("blacklist-paths");
 
             boolean enableWhitelistFiletypes = Config.getBoolean("enable-whitelist-filetypes");
-            List<String> allowedTypes = Config.getStringList("whitelist-filetypes");
+            ArrayList<String> allowedTypes = Config.getStringList("whitelist-filetypes");
 
             boolean enableWhitelistPaths = Config.getBoolean("enable-whitelist-paths");
-            List<String> allowedPaths = Config.getStringList("whitelist-paths");
+            ArrayList<String> allowedPaths = Config.getStringList("whitelist-paths");
 
             boolean isDirectory = path.endsWith("/");
 
@@ -416,7 +415,7 @@ public abstract class FilesManager {
             int count = countFiles(new File(repo.getAbsolutePath() + "/" + path));
 
             // get the path of all files and directories to be deleted
-            List<File> files = new ArrayList<>();
+            ArrayList<File> files = new ArrayList<>();
 
             if (!file.exists()) {
                 throw new FileNotFoundException("file does not exist");
@@ -501,16 +500,16 @@ public abstract class FilesManager {
         busy = true;
         try {
             boolean enableWhitelistFiletypes = Config.getBoolean("enable-whitelist-filetypes");
-            List<String> allowedTypes = Config.getStringList("whitelist-filetypes");
+            ArrayList<String> allowedTypes = Config.getStringList("whitelist-filetypes");
 
             boolean enableWhitelistPaths = Config.getBoolean("enable-whitelist-paths");
-            List<String> allowedPaths = Config.getStringList("whitelist-paths");
+            ArrayList<String> allowedPaths = Config.getStringList("whitelist-paths");
 
             boolean enableBlacklistFiletypes = Config.getBoolean("enable-blacklist-filetypes");
-            List<String> blockedTypes = Config.getStringList("blacklist-filetypes");
+            ArrayList<String> blockedTypes = Config.getStringList("blacklist-filetypes");
 
             boolean enableBlacklistPaths = Config.getBoolean("enable-blacklist-paths");
-            List<String> blockedPaths = Config.getStringList("blacklist-paths");
+            ArrayList<String> blockedPaths = Config.getStringList("blacklist-paths");
 
             File path = new File(plugin.getDataFolder().getAbsolutePath() + "/repo");
             if (!path.exists()) {
