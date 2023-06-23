@@ -1,17 +1,15 @@
 # Setup of the repository to sync with
-repository-url: "" # Without trailing slash (e.g.: https://github.com/Konstanius/GitHubMcSync)
+repository-url: "" # Without trailing slash (e.g.: https://github.com/Konstanius/MineCICD)
 token: "" # Fine-grained or full access token
 branch: "main" # Specify the branch to sync with, useful for test servers, then using a pull request to sync with the main server
 last-commit: "" # Do not change this value, it is used to check if the commit is outdated
 
 # Setup of the webhook used to detect pushes
 webhook-port: 8080 # Set to 0 to disable
-webhook-path: "/minecicd"
-webhook-secret: "aejrcnq3zc94b3quz7r89cvzq3b0zcr923gr70" # This is the secret used to verify the webhook, it is recommended to change it
+webhook-path: "minecicd"
+webhook-secret: "" # This is the secret used to verify the webhook, it is recommended to change it
 
 # Configuration for the scope of the synchronization
-log-changes: true
-
 enable-whitelist-filetypes: true
 whitelist-filetypes:
   - ".yml"
@@ -47,4 +45,3 @@ blacklist-paths:
 allow-individual-reload: true # This might not work with all plugins, issues will be displayed in the console. It is recommended to disable this on production servers
 allow-global-reload: false # This is highly discouraged, as it can cause issues with many plugins
 allow-restart: true
-# if all 3 are false, the plugin will only display a message to users with the permission "minecicd.log"

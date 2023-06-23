@@ -32,18 +32,21 @@ public final class MineCICD extends JavaPlugin {
         try {
             int port = Config.getInt("webhook-port");
             if (port != 0) {
-                URL whatismyip = new URL("http://checkip.amazonaws.com");
+                URL whatismyip = new URL("https://checkip.amazonaws.com");
                 BufferedReader in = new BufferedReader(new InputStreamReader(whatismyip.openStream()));
                 String ip = in.readLine();
 
                 String webhookPath = Config.getString("webhook-path");
+                if (webhookPath.startsWith("/")) {
+                    webhookPath = webhookPath.substring(1);
+                }
 
                 webServer = HttpServer.create(new InetSocketAddress(port), 0);
-                webServer.createContext(webhookPath, new WebhookHandler());
+                webServer.createContext("/" + webhookPath, new WebhookHandler());
                 webServer.setExecutor(null);
                 webServer.start();
 
-                log("GitMcSync started listening on: http://" + ip + ":" + port + webhookPath, Level.INFO);
+                log("GitMcSync started listening on: http://" + ip + ":" + port + "/" + webhookPath, Level.INFO);
             } else {
                 log("Webhook port is not set. Please set it in config.yml.", Level.WARNING);
             }
@@ -59,16 +62,12 @@ public final class MineCICD extends JavaPlugin {
 
         try {
             GitManager.checkoutBranch();
-        } catch (IOException | GitAPIException ignored) {
-        }
 
-        try {
             boolean changes = GitManager.pullRepo();
             if (changes) {
                 FilesManager.mergeToLocal();
             }
-        } catch (IOException | GitAPIException e) {
-            e.printStackTrace();
+        } catch (IOException | GitAPIException ignored) {
         }
     }
 
