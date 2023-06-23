@@ -1,14 +1,19 @@
 package ml.konstanius.minecicd;
 
+import com.google.common.collect.Iterables;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.PullResult;
+import org.eclipse.jgit.api.ResetCommand;
 import org.eclipse.jgit.api.RmCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 
@@ -209,8 +214,9 @@ public abstract class GitManager {
 
     /**
      * Remove a file / directory from the repo
+     *
      * @param files files / directories to remove
-     * @throws IOException if repo folder does not exist
+     * @throws IOException     if repo folder does not exist
      * @throws GitAPIException if git rm fails
      */
     public static void remove(List<File> files, String message, String playerName) throws IOException, GitAPIException {
@@ -251,7 +257,7 @@ public abstract class GitManager {
     public static void checkoutBranch() throws IOException, GitAPIException {
         boolean ownsBusy = !busy;
         busy = true;
-        try (Git git = Git.open(new File(plugin.getDataFolder().getAbsolutePath() + "/repo"))){
+        try (Git git = Git.open(new File(plugin.getDataFolder().getAbsolutePath() + "/repo"))) {
             try {
                 git.checkout().setName(Config.getString("branch")).call();
             } catch (Exception ignored) {
@@ -274,5 +280,90 @@ public abstract class GitManager {
                 "Repository is " + repositoryUrl,
                 "Last commit: " + (lastCommit.isEmpty() ? "None" : lastCommit),
         };
+    }
+
+    public static void reset(String commit) throws IOException, GitAPIException {
+        boolean ownsBusy = !busy;
+        busy = true;
+        try  {
+            // Reset the branch to a specific commit
+            if (commit.startsWith("http")) {
+                commit = commit.substring(commit.lastIndexOf("/") + 1);
+            }
+
+            pullRepo();
+
+            FilesManager.gitSanitizer();
+
+            String token = Config.getString("token");
+
+            String repoPath = plugin.getDataFolder().getAbsolutePath() + "/repo";
+
+            try (Git git = Git.open(new File(repoPath))) {
+                git.reset().setMode(ResetCommand.ResetType.HARD).setRef(commit).call();
+                git.push().setCredentialsProvider(new UsernamePasswordCredentialsProvider(token, "")).call();
+                String newCommit = git.log().call().iterator().next().getName();
+                Config.set("last-commit", newCommit);
+                Config.save();
+            }
+        } finally {
+            if (ownsBusy) {
+                busy = false;
+            }
+        }
+    }
+
+    public static void revert(String commit) throws IOException, GitAPIException {
+        boolean ownsBusy = !busy;
+        busy = true;
+        try {
+            // Revert a specific commit
+            if (commit.startsWith("http")) {
+                commit = commit.substring(commit.lastIndexOf("/") + 1);
+            }
+
+            pullRepo();
+
+            FilesManager.gitSanitizer();
+
+            String token = Config.getString("token");
+
+            String repoPath = plugin.getDataFolder().getAbsolutePath() + "/repo";
+
+            try (Git git = Git.open(new File(repoPath))) {
+                git.revert().include(git.getRepository().resolve(commit)).call();
+                git.push().setCredentialsProvider(new UsernamePasswordCredentialsProvider(token, "")).call();
+                String newCommit = git.log().call().iterator().next().getName();
+                Config.set("last-commit", newCommit);
+                Config.save();
+            }
+        } finally {
+            if (ownsBusy) {
+                busy = false;
+            }
+        }
+    }
+
+    public static String[] getLog() {
+        List<String> log = new ArrayList<>();
+
+        try {
+            pullRepo();
+
+            FilesManager.gitSanitizer();
+
+            String repoPath = plugin.getDataFolder().getAbsolutePath() + "/repo";
+
+            try (Git git = Git.open(new File(repoPath))) {
+                Iterable<RevCommit> commits = git.log().call();
+                for (RevCommit commit : commits) {
+                    String mini = "<blue><u><click:copy_to_clipboard:" + commit.getName() + ">" + commit.getName() + "</click></u></blue> - " + commit.getShortMessage();
+                    log.add(mini);
+                }
+            }
+        } catch (Exception ignored) {
+        }
+
+        return log.toArray(new String[0]);
     }
 }

@@ -155,12 +155,76 @@ public class BaseCommand implements CommandExecutor {
                 }
                 return true;
             }
+            case "reset" -> {
+                if (args.length < 3) {
+                    sender.sendRichMessage("Invalid arguments. Usage: /MineCICD reset <commit hash / link>");
+                    return true;
+                }
+
+                try {
+                    GitManager.reset(args[1]);
+                    sender.sendRichMessage("Reset successfully");
+                } catch (IOException | GitAPIException e) {
+                    sender.sendRichMessage("Error resetting: " + e.getMessage());
+                    e.printStackTrace();
+                }
+                return true;
+            }
+            case "revert" -> {
+                if (args.length < 3) {
+                    sender.sendRichMessage("Invalid arguments. Usage: /MineCICD revert <commit hash / link>");
+                    return true;
+                }
+
+                try {
+                    GitManager.revert(args[1]);
+                    sender.sendRichMessage("Reverted successfully");
+                } catch (IOException | GitAPIException e) {
+                    sender.sendRichMessage("Error reverting: " + e.getMessage());
+                    e.printStackTrace();
+                }
+                return true;
+            }
+            case "log" -> {
+                if (args.length != 2) {
+                    sender.sendRichMessage("Invalid arguments. Usage: /MineCICD log <page>");
+                    return true;
+                }
+
+                String[] lines = GitManager.getLog();
+
+                int page = Integer.parseInt(args[1]);
+                int maxPage = (int) Math.ceil(lines.length / 10.0);
+                if (page > maxPage) {
+                    sender.sendRichMessage("Invalid page number. Max page number is " + maxPage);
+                    return true;
+                }
+
+                sender.sendRichMessage("===== MineCICD log (" + page + "/" + maxPage + ") =====");
+                for (int i = (page - 1) * 10; i < page * 10; i++) {
+                    if (i >= lines.length) {
+                        break;
+                    }
+                    sender.sendRichMessage(lines[i]);
+                }
+                if (maxPage == 1) {
+                    sender.sendRichMessage("===== End of log =====");
+                } else {
+                    String left = page == 1 ? "<- (Beginning)" : " <blue><u><click:run_command:TODO><- ("+ (page - 1) +") </click></u></blue>";
+                    String right = page == maxPage ? "(End) ->" : " <blue><u><click:run_command:TODO>("+ (page + 1) +") -></click></u></blue> > ";
+                    sender.sendRichMessage("===== " + left + " | " + right + " =====");
+                }
+                return true;
+            }
             default -> {
                 sender.sendRichMessage("Invalid subcommand. Valid commands:");
                 sender.sendRichMessage("/MineCICD pull - Pulls the repo from the remote");
                 sender.sendRichMessage("/MineCICD push <commit message> - Pushes the repo to the remote");
                 sender.sendRichMessage("/MineCICD add <file> <message> - Adds a file to the repo");
                 sender.sendRichMessage("/MineCICD clone - Clones the repo from the remote");
+                sender.sendRichMessage("/MineCICD status - Gets the status of the repo");
+                sender.sendRichMessage("/MineCICD reset <commit hash / link> - Resets the current branch to a specific commit");
+                sender.sendRichMessage("/MineCICD revert <commit hash / link> - Reverts a specific commit");
                 sender.sendRichMessage("/MineCICD reload - Reloads the config");
                 return true;
             }
