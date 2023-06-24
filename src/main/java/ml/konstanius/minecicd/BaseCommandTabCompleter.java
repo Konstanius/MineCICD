@@ -37,7 +37,7 @@ public class BaseCommandTabCompleter implements TabCompleter {
         int argLength = args.length;
         if (argLength == 1) {
             // Subcommands
-            List<String> list = new java.util.ArrayList<>(List.of("pull", "push", "add", "remove", "clone", "status", "reset", "revert", "log", "reload", "mute", "help", "script"));
+            List<String> list = new java.util.ArrayList<>(List.of("pull", "push", "add", "remove", "clone", "status", "reset", "revert", "log", "reload", "mute", "help", "script", "rollback"));
             list.removeIf(s -> !sender.hasPermission("minecicd." + s));
             return list;
         } else {
@@ -46,10 +46,6 @@ public class BaseCommandTabCompleter implements TabCompleter {
                 return List.of();
             }
             switch (subCommand) {
-                case "push" -> {
-                    // Commit message
-                    return List.of("<commit message>");
-                }
                 case "add" -> {
                     if (argLength == 2) {
                         String filter = args[1];
@@ -103,7 +99,6 @@ public class BaseCommandTabCompleter implements TabCompleter {
                 case "script" -> {
                     // returns the name of scripts defined in plugin data folder / scripts / <name>.txt
                     if (argLength == 2) {
-                        System.out.println(MineCICD.scripts);
                         return new ArrayList<>(MineCICD.scripts);
                     }
                     return List.of();
@@ -111,10 +106,6 @@ public class BaseCommandTabCompleter implements TabCompleter {
                 case "mute" -> {
                     // Returns true or false
                     return List.of("true", "false");
-                }
-                case "pull", "status", "clone", "reload" -> {
-                    // No arguments
-                    return List.of();
                 }
             }
         }

@@ -1,6 +1,8 @@
 package ml.konstanius.minecicd;
 
 import org.bukkit.Bukkit;
+import org.bukkit.boss.BarColor;
+import org.bukkit.boss.BarStyle;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -13,7 +15,9 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.HashMap;
 
+import static ml.konstanius.minecicd.Messages.getMessage;
 import static ml.konstanius.minecicd.Messages.sendManagementMessage;
 import static ml.konstanius.minecicd.MineCICD.*;
 
@@ -33,12 +37,20 @@ public class BaseCommand implements CommandExecutor {
         }
 
         if (!sender.hasPermission("minecicd." + subCommand)) {
-            sender.sendRichMessage("You do not have permission to use this command");
+            sender.sendRichMessage(getMessage(
+                    "no-permission",
+                    true,
+                    new HashMap<>() {{put("label", label);}}
+            ));
             return true;
         }
 
         if (busy) {
-            sender.sendRichMessage("The plugin is busy with another command");
+            sender.sendRichMessage(getMessage(
+                    "busy",
+                    true,
+                    new HashMap<>() {{put("label", label);}}
+            ));
             return true;
         }
 
@@ -46,7 +58,20 @@ public class BaseCommand implements CommandExecutor {
         if (sender instanceof Player) {
             ((Player) sender).closeInventory();
         }
-        MineCICD.bossBar.setTitle("MineCICD: Processing command (Git " + subCommand + ")...");
+
+        String title = Config.getString("bossbar-command-title");
+        title = title.replace("{action}", subCommand);
+        MineCICD.bossBar.setTitle(title);
+        BarColor color = BarColor.GREEN;
+        for (BarColor barColor : BarColor.values()) {
+            if (barColor.name().contains(Config.getString("bossbar-command-color").toUpperCase())) {
+                color = barColor;
+                break;
+            }
+        }
+        MineCICD.bossBar.setColor(color);
+        MineCICD.bossBar.setStyle(BarStyle.SOLID);
+        MineCICD.bossBar.setProgress(1.0);
 
         // start an empty async task
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
@@ -55,42 +80,75 @@ public class BaseCommand implements CommandExecutor {
                     case "pull" -> {
                         try {
                             if (args.length != 1) {
-                                sender.sendRichMessage("Invalid arguments. Usage: /" + label + " pull");
+                                sender.sendRichMessage(getMessage(
+                                        "pull-usage",
+                                        true,
+                                        new HashMap<>() {{put("label", label);}}
+                                ));
                                 return;
                             }
 
                             boolean changes = GitManager.pullRepo();
                             if (changes) {
                                 FilesManager.mergeToLocal();
-                                sender.sendRichMessage("All changes have been pulled successfully");
+                                sender.sendRichMessage(getMessage(
+                                        "pull-success",
+                                        true,
+                                        new HashMap<>() {{put("label", label);}}
+                                ));
                                 sendManagementMessage(sender);
                             } else {
-                                sender.sendRichMessage("No changes to pull");
+                                sender.sendRichMessage(getMessage(
+                                        "pull-no-changes",
+                                        true,
+                                        new HashMap<>() {{put("label", label);}}
+                                ));
                             }
                         } catch (IOException | GitAPIException e) {
-                            sender.sendRichMessage("Error pulling repo: " + e.getMessage());
+                            sender.sendRichMessage(getMessage(
+                                    "pull-failed",
+                                    true,
+                                    new HashMap<>() {{put("error", e.getMessage());}}
+                            ));
                             e.printStackTrace();
                         }
                     }
                     case "push" -> {
                         try {
                             if (args.length < 2) {
-                                sender.sendRichMessage("Invalid arguments. Usage: /" + label + " push <commit message>");
+                                sender.sendRichMessage(getMessage(
+                                        "push-usage",
+                                        true,
+                                        new HashMap<>() {{put("label", label);}}
+                                ));
                                 return;
                             }
 
                             FilesManager.mergeToGit();
                             String commitMessage = String.join(" ", Arrays.copyOfRange(args, 1, args.length));
                             GitManager.pushRepo(commitMessage, sender.getName());
-                            sender.sendRichMessage("Pushed repo successfully");
+                            sender.sendRichMessage(getMessage(
+                                    "push-success",
+                                    true,
+                                    new HashMap<>() {{put("label", label);}}
+                            ));
+                            sendManagementMessage(sender);
                         } catch (IOException | GitAPIException e) {
-                            sender.sendRichMessage("Error pushing repo: " + e.getMessage());
+                            sender.sendRichMessage(getMessage(
+                                    "push-failed",
+                                    true,
+                                    new HashMap<>() {{put("error", e.getMessage());}}
+                            ));
                             e.printStackTrace();
                         }
                     }
                     case "reload" -> {
                         if (args.length != 1) {
-                            sender.sendRichMessage("Invalid arguments. Usage: /" + label + " reload");
+                            sender.sendRichMessage(getMessage(
+                                    "reload-usage",
+                                    true,
+                                    new HashMap<>() {{put("label", label);}}
+                            ));
                             return;
                         }
 
@@ -99,14 +157,22 @@ public class BaseCommand implements CommandExecutor {
                         try {
                             GitManager.checkoutBranch();
                         } catch (IOException | GitAPIException e) {
-                            sender.sendRichMessage("Error checking out branch: " + e.getMessage() + "\nYou might still be able to continue using the plugin");
+                            sender.sendRichMessage(getMessage(
+                                    "reload-failed",
+                                    true,
+                                    new HashMap<>() {{put("error", e.getMessage());}}
+                            ));
                             return;
                         }
-                        sender.sendRichMessage("Reloaded config successfully");
+                        sender.sendRichMessage(getMessage("reload-success", true));
                     }
                     case "add" -> {
                         if (args.length < 3) {
-                            sender.sendRichMessage("Invalid arguments. Usage: /" + label + " add <file / 'directory/'> <message> (trailing slash is required for directories)");
+                            sender.sendRichMessage(getMessage(
+                                    "add-usage",
+                                    true,
+                                    new HashMap<>() {{put("label", label);}}
+                            ));
                             return;
                         }
 
@@ -114,15 +180,27 @@ public class BaseCommand implements CommandExecutor {
                         String message = String.join(" ", Arrays.copyOfRange(args, 2, args.length));
                         try {
                             int amount = FilesManager.addPath(file, message, sender.getName());
-                            sender.sendRichMessage("Added " + amount + " file(s) successfully");
+                            sender.sendRichMessage(getMessage(
+                                    "add-success",
+                                    true,
+                                    new HashMap<>() {{put("amount", String.valueOf(amount));}}
+                            ));
                         } catch (IOException | GitAPIException e) {
-                            sender.sendRichMessage("Error adding file(s): " + e.getMessage());
+                            sender.sendRichMessage(getMessage(
+                                    "add-failed",
+                                    true,
+                                    new HashMap<>() {{put("error", e.getMessage());}}
+                            ));
                             e.printStackTrace();
                         }
                     }
                     case "remove" -> {
                         if (args.length < 3) {
-                            sender.sendRichMessage("Invalid arguments. Usage: /" + label + " remove <file / 'directory/'> <message> (trailing slash is required for directories)");
+                            sender.sendRichMessage(getMessage(
+                                    "remove-usage",
+                                    true,
+                                    new HashMap<>() {{put("label", label);}}
+                            ));
                             return;
                         }
 
@@ -130,31 +208,51 @@ public class BaseCommand implements CommandExecutor {
                         String message = String.join(" ", Arrays.copyOfRange(args, 2, args.length));
                         try {
                             int amount = FilesManager.removePath(file, message, sender.getName());
-                            sender.sendRichMessage("Removed " + amount + " file(s) successfully");
+                            sender.sendRichMessage(getMessage(
+                                    "remove-success",
+                                    true,
+                                    new HashMap<>() {{put("amount", String.valueOf(amount));}}
+                            ));
                         } catch (IOException | GitAPIException e) {
-                            sender.sendRichMessage("Error removing file(s): " + e.getMessage());
+                            sender.sendRichMessage(getMessage(
+                                    "remove-failed",
+                                    true,
+                                    new HashMap<>() {{put("error", e.getMessage());}}
+                            ));
                             e.printStackTrace();
                         }
                     }
                     case "clone" -> {
                         if (args.length != 1) {
-                            sender.sendRichMessage("Invalid arguments. Usage: /" + label + " clone");
+                            sender.sendRichMessage(getMessage(
+                                    "clone-usage",
+                                    true,
+                                    new HashMap<>() {{put("label", label);}}
+                            ));
                             return;
                         }
 
                         try {
                             GitManager.cloneRepo();
                             FilesManager.mergeToLocal();
-                            sender.sendRichMessage("Cloned repo successfully");
+                            sender.sendRichMessage(getMessage("clone-success", true));
                             sendManagementMessage(sender);
                         } catch (IOException | GitAPIException e) {
-                            sender.sendRichMessage("Error cloning repo: " + e.getMessage());
+                            sender.sendRichMessage(getMessage(
+                                    "clone-failed",
+                                    true,
+                                    new HashMap<>() {{put("error", e.getMessage());}}
+                            ));
                             e.printStackTrace();
                         }
                     }
                     case "status" -> {
                         if (args.length != 1) {
-                            sender.sendRichMessage("Invalid arguments. Usage: /" + label + " status");
+                            sender.sendRichMessage(getMessage(
+                                    "status-usage",
+                                    true,
+                                    new HashMap<>() {{put("label", label);}}
+                            ));
                             return;
                         }
 
@@ -165,22 +263,34 @@ public class BaseCommand implements CommandExecutor {
                     }
                     case "reset" -> {
                         if (args.length < 3) {
-                            sender.sendRichMessage("Invalid arguments. Usage: /" + label + " reset <commit hash / link>");
+                            sender.sendRichMessage(getMessage(
+                                    "reset-usage",
+                                    true,
+                                    new HashMap<>() {{put("label", label);}}
+                            ));
                             return;
                         }
 
                         try {
                             GitManager.reset(args[1]);
-                            sender.sendRichMessage("Reset successfully");
+                            sender.sendRichMessage(getMessage("reset-success", true));
                             sendManagementMessage(sender);
                         } catch (IOException | GitAPIException e) {
-                            sender.sendRichMessage("Error resetting: " + e.getMessage());
+                            sender.sendRichMessage(getMessage(
+                                    "reset-failed",
+                                    true,
+                                    new HashMap<>() {{put("error", e.getMessage());}}
+                            ));
                             e.printStackTrace();
                         }
                     }
                     case "rollback" -> {
                         if (args.length != 3) {
-                            sender.sendRichMessage("Invalid arguments. Usage: /" + label + " rollback <dd-MM-yyyy HH:mm:ss>");
+                            sender.sendRichMessage(getMessage(
+                                    "rollback-usage",
+                                    true,
+                                    new HashMap<>() {{put("label", label);}}
+                            ));
                             return;
                         }
 
@@ -189,43 +299,67 @@ public class BaseCommand implements CommandExecutor {
                         try {
                             calendar.setTime(new SimpleDateFormat("dd-MM-yyyy HH:mm:ss").parse(date));
                         } catch (ParseException e) {
-                            sender.sendRichMessage("Invalid date format. Usage: /" + label + " rollback <dd-MM-yyyy HH:mm:ss>");
+                            sender.sendRichMessage(getMessage(
+                                    "rollback-invalid-date",
+                                    true,
+                                    new HashMap<>() {{put("label", label);}}
+                            ));
                             return;
                         }
 
                         // if future
                         if (calendar.after(Calendar.getInstance())) {
-                            sender.sendRichMessage("Invalid date (Is in future). Usage: /" + label + " rollback <dd-MM-yyyy HH:mm:ss>");
+                            sender.sendRichMessage(getMessage(
+                                    "rollback-future-date",
+                                    true,
+                                    new HashMap<>() {{put("label", label);}}
+                            ));
                             return;
                         }
 
                         try {
                             GitManager.rollback(calendar);
-                            sender.sendRichMessage("Rolled back successfully");
+                            sender.sendRichMessage(getMessage("rollback-success", true));
                             sendManagementMessage(sender);
                         } catch (IOException | GitAPIException e) {
-                            sender.sendRichMessage("Error rolling back: " + e.getMessage());
+                            sender.sendRichMessage(getMessage(
+                                    "rollback-failed",
+                                    true,
+                                    new HashMap<>() {{put("error", e.getMessage());}}
+                            ));
                             e.printStackTrace();
                         }
                     }
                     case "revert" -> {
                         if (args.length < 3) {
-                            sender.sendRichMessage("Invalid arguments. Usage: /" + label + " revert <commit hash / link>");
+                            sender.sendRichMessage(getMessage(
+                                    "revert-usage",
+                                    true,
+                                    new HashMap<>() {{put("label", label);}}
+                            ));
                             return;
                         }
 
                         try {
                             GitManager.revert(args[1]);
-                            sender.sendRichMessage("Reverted successfully");
+                            sender.sendRichMessage(getMessage("revert-success", true));
                             sendManagementMessage(sender);
                         } catch (IOException | GitAPIException e) {
-                            sender.sendRichMessage("Error reverting: " + e.getMessage());
+                            sender.sendRichMessage(getMessage(
+                                    "revert-failed",
+                                    true,
+                                    new HashMap<>() {{put("error", e.getMessage());}}
+                            ));
                             e.printStackTrace();
                         }
                     }
                     case "log" -> {
                         if (args.length != 2) {
-                            sender.sendRichMessage("Invalid arguments. Usage: /" + label + " log <page>");
+                            sender.sendRichMessage(getMessage(
+                                    "log-usage",
+                                    true,
+                                    new HashMap<>() {{put("label", label);}}
+                            ));
                             return;
                         }
 
@@ -234,14 +368,29 @@ public class BaseCommand implements CommandExecutor {
                         int page = Integer.parseInt(args[1]);
                         int maxPage = (int) Math.ceil(lines.length / 10.0);
                         if (page > maxPage) {
-                            sender.sendRichMessage("Invalid page number. Max page number is " + maxPage);
+                            sender.sendRichMessage(getMessage(
+                                    "log-invalid-page-high",
+                                    true,
+                                    new HashMap<>() {{put("maxPage", String.valueOf(maxPage));}}
+                            ));
                             return;
                         } else if (page < 1) {
-                            sender.sendRichMessage("Invalid page number. Min page number is 1");
+                            sender.sendRichMessage(getMessage(
+                                    "log-invalid-page-low",
+                                    true,
+                                    new HashMap<>() {{put("minPage", "1");}}
+                            ));
                             return;
                         }
 
-                        sender.sendRichMessage("===== MineCICD log (" + page + "/" + maxPage + ") =====");
+                        sender.sendRichMessage(getMessage(
+                                "log-header",
+                                false,
+                                new HashMap<>() {{
+                                    put("page", String.valueOf(page));
+                                    put("maxPage", String.valueOf(maxPage));
+                                }}
+                        ));
                         for (int i = (page - 1) * 10; i < page * 10; i++) {
                             if (i >= lines.length) {
                                 break;
@@ -249,22 +398,65 @@ public class BaseCommand implements CommandExecutor {
                             sender.sendRichMessage(lines[i]);
                         }
                         if (maxPage == 1) {
-                            sender.sendRichMessage("===== End of log =====");
+                            sender.sendRichMessage(getMessage("log-end", false));
                         } else {
-                            String left = page == 1 ? "<- (Beginning)" : " <blue><u><hover:show_text:Previous page><click:run_command:/git log " + (page - 1) + "><- ("+ (page - 1) +") </click></hover></u></blue>";
-                            String right = page == maxPage ? "(End) ->" : " <blue><u><hover:show_text:Next page><click:run_command:/git log " + (page + 1) + " >("+ (page + 1) +") -></click></hover></u></blue> > ";
-                            sender.sendRichMessage("===== " + left + " | " + right + " =====");
+                            String left;
+                            if (page == 1) {
+                                left = getMessage(
+                                        "log-end-first",
+                                        false
+                                );
+                            } else {
+                                left = getMessage(
+                                        "log-end-previous",
+                                        false,
+                                        new HashMap<>() {{
+                                            put("previousPage", String.valueOf(page - 1));
+                                        }}
+                                );
+                            }
+
+                            String right;
+                            if (page == maxPage) {
+                                right = getMessage(
+                                        "log-end-last",
+                                        false
+                                );
+                            } else {
+                                right = getMessage(
+                                        "log-end-next",
+                                        false,
+                                        new HashMap<>() {{
+                                            put("nextPage", String.valueOf(page + 1));
+                                        }}
+                                );
+                            }
+
+                            sender.sendRichMessage(
+                                    getMessage(
+                                            "log-end-paged",
+                                            false,
+                                            new HashMap<>() {{
+                                                put("left", left);
+                                                put("right", right);
+                                            }}
+                                    )
+                            );
                         }
                     }
                     case "mute" -> {
                         if (args.length != 2) {
-                            sender.sendRichMessage("Invalid arguments. Usage: /" + label + " mute <true / false>");
+                            sender.sendRichMessage(getMessage(
+                                    "mute-usage",
+                                    true,
+                                    new HashMap<>() {{put("label", label);}}
+                            ));
                             return;
                         }
 
                         // if not player
                         if (!(sender instanceof Player)) {
-                            sender.sendRichMessage("You must be a player to use this command");
+                            sender.sendRichMessage(getMessage("mute-not-player", true));
                             return;
                         }
 
@@ -275,46 +467,66 @@ public class BaseCommand implements CommandExecutor {
                         } else if (arg.equalsIgnoreCase("false") || arg.equalsIgnoreCase("no") || arg.equalsIgnoreCase("off") || arg.equalsIgnoreCase("0")) {
                             mute = false;
                         } else {
-                            sender.sendRichMessage("Invalid mute value. Usage: /" + label + " mute <true / false>");
+                            sender.sendRichMessage(getMessage(
+                                    "mute-usage",
+                                    true,
+                                    new HashMap<>() {{put("label", label);}}
+                            ));
                             return;
                         }
 
                         String uuid = ((Player) sender).getUniqueId().toString();
                         if (mute) {
-                            sender.sendRichMessage("Muted MineCICD messages");
+                            sender.sendRichMessage(getMessage("mute-enabled", true));
                             muteList.add(uuid);
                         } else {
-                            sender.sendRichMessage("Unmuted MineCICD messages");
+                            sender.sendRichMessage(getMessage("mute-disabled", true));
                             muteList.remove(uuid);
                         }
                     }
                     case "script" -> {
                         if (args.length != 2) {
-                            sender.sendRichMessage("Invalid arguments. Usage: /" + label + " script <script name>");
+                            sender.sendRichMessage(getMessage(
+                                    "script-usage",
+                                    true,
+                                    new HashMap<>() {{put("label", label);}}
+                            ));
                             return;
                         }
 
                         String scriptName = args[1];
 
+                        // remove trailing .txt
+                        if (scriptName.endsWith(".txt")) {
+                            scriptName = scriptName.substring(0, scriptName.length() - 4);
+                        }
+
                         try {
                             Script.run(scriptName);
-                            sender.sendRichMessage("Script ran successfully");
+                            sender.sendRichMessage(getMessage("script-success", true));
                         } catch (Exception e) {
-                            sender.sendRichMessage("Error running script: " + e.getMessage());
+                            sender.sendRichMessage(getMessage(
+                                    "script-failed",
+                                    true,
+                                    new HashMap<>() {{put("error", e.getMessage());}}
+                            ));
                             e.printStackTrace();
                         }
                     }
                     default -> {
-                        sender.sendRichMessage("Invalid subcommand. Valid commands:");
+                        if (!subCommand.equals("help")) {
+                            sender.sendRichMessage("Invalid subcommand. Valid commands:");
+                        }
+                        sender.sendRichMessage("/" + label + " clone - Clones the repo from the remote");
                         sender.sendRichMessage("/" + label + " pull - Pulls the repo from the remote");
                         sender.sendRichMessage("/" + label + " push <commit message> - Pushes the repo to the remote");
                         sender.sendRichMessage("/" + label + " add <file> <message> - Adds a file to the repo");
                         sender.sendRichMessage("/" + label + " remove <file> <message> - Removes a file from the repo");
-                        sender.sendRichMessage("/" + label + " clone - Clones the repo from the remote");
-                        sender.sendRichMessage("/" + label + " status - Gets the status of the repo");
                         sender.sendRichMessage("/" + label + " reset <commit hash / link> - Resets the current branch to a specific commit");
                         sender.sendRichMessage("/" + label + " revert <commit hash / link> - Reverts a specific commit");
+                        sender.sendRichMessage("/" + label + " script <script name> - Runs a script from MineCICD/scripts/<script>.txt");
                         sender.sendRichMessage("/" + label + " log <page> - Lists the commits in the repo");
+                        sender.sendRichMessage("/" + label + " status - Gets the status of the repo");
                         sender.sendRichMessage("/" + label + " mute <true / false> - Mutes MineCICD messages");
                         sender.sendRichMessage("/" + label + " reload - Reloads the config");
                     }

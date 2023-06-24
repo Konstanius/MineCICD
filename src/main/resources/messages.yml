@@ -1,0 +1,79 @@
+# Configuration for messages sent when commands / events are processed
+# Messages CAN be formatted using the MiniMessage format (see https://docs.adventure.kyori.net/minimessage.html)
+# They CAN also contain & color codes (see https://minecraft.gamepedia.com/Formatting_codes)
+prefix: "&7[&aMine&bCI&dCD&7] &r"
+
+no-permission: "&cYou do not have permission to use this command."
+busy: "&cThe plugin is currently processing another command."
+
+pull-usage: "&cInvalid arguments. Usage: /{label} pull"
+pull-failed: "&cError pulling repo: {error}"
+pull-success: "&aAll changes have been pulled successfully."
+pull-no-changes: "&aNo changes to pull."
+
+push-usage: "&cInvalid arguments. Usage: /{label} push <commit message>"
+push-failed: "&cError pushing repo: {error}"
+push-success: "&Repo pushed successfully."
+
+reload-usage: "&cInvalid arguments. Usage: /{label} reload"
+reload-failed: "&cError checking out branch: {error}\n{prefix}&cYou might still be able to continue using the plugin."
+reload-success: "&aConfiguration, messages, and caches reloaded successfully."
+
+add-usage: "&cInvalid arguments. Usage: /{label} add <file / 'directory/'> <message> (trailing slash is required for directories)"
+add-failed: "&cError adding file(s): {error}"
+add-success: "&aAdded {amount} file(s) successfully."
+
+remove-usage: "&cInvalid arguments. Usage: /{label} remove <file / 'directory/'> <message> (trailing slash is required for directories)"
+remove-failed: "&cError removing file(s): {error}"
+remove-success: "&aRemoved {amount} file(s) successfully."
+
+clone-usage: "&cInvalid arguments. Usage: /{label} clone"
+clone-failed: "&cError cloning repo: {error}"
+clone-success: "&aCloned repo successfully."
+
+status-usage: "&cInvalid arguments. Usage: /{label} status"
+status-message: "&aMine&bCI&dCD &ais operating on branch {branch}\n&aRepository is {repository}\n&aLast commit: {lastCommit}"
+
+reset-usage: "&cInvalid arguments. Usage: /{label} reset <commit hash / link>"
+reset-failed: "&cError resetting: {error}"
+reset-success: "&aReset successfully."
+
+rollback-usage: "&cInvalid arguments. Usage: /{label} rollback <dd-MM-yyyy HH:mm:ss>"
+rollback-invalid-date: "&cInvalid date format. Usage: /{label} rollback <dd-MM-yyyy HH:mm:ss>"
+rollback-future-date: "&cInvalid date (Is in future). Usage: /{label} rollback <dd-MM-yyyy HH:mm:ss>"
+rollback-failed: "&cError rolling back: {error}"
+rollback-success: "&aRolled back successfully."
+
+revert-usage: "&cInvalid arguments. Usage: /{label} revert <commit hash / link>"
+revert-failed: "&cError reverting: {error}"
+revert-success: "&aReverted successfully."
+
+log-usage: "&cInvalid arguments. Usage: /{label} log <page>"
+log-invalid-page-high: "&cInvalid page number. Max page number is {maxPage}"
+log-invalid-page-low: "&cInvalid page number. Min page number is 1"
+log-header: "&7===== &aMine&bCI&dCD &7log (&a{page} &7/ &a{maxPage}&7) ====="
+log-line: "<green><u><hover:show_text:Click to copy commit revision><click:copy_to_clipboard:{revision}>{revisionShort}</click></hover></u></green> on {date}: {message}"
+log-end: "&7===== End of log ====="
+log-end-previous: "<green><u><hover:show_text:Previous page><click:run_command:/git log {previousPage}><- ({previousPage}) </click></hover></u></green>"
+log-end-first: "<- (Beginning)"
+log-end-next: "<green><u><hover:show_text:Next page><click:run_command:/git log {nextPage}>({nextPage}) -></click></hover></u></green>"
+log-end-last: "(End) ->"
+log-end-paged: "&7===== &r{left} &7| &r{right} &7====="
+
+mute-usage: "&cInvalid arguments. Usage: /{label} mute <true / false>"
+mute-not-player: "&cYou must be a player to use this command."
+mute-enabled: "&aSuccessfully muted Mine&bCI&dCD&a notifications and BossBars."
+mute-disabled: "&aSuccessfully unmuted Mine&bCI&dCD&a notifications and BossBars."
+
+script-usage: "&cInvalid arguments. Usage: /{label} script <script name>"
+script-failed: "&cError running script:\n{error}"
+script-error: "&cScript failed on line {line}\nCommand: {command}\n{error}"
+script-success: "&aScript ran successfully"
+
+error-repo-missing: "Repo folder does not exist."
+error-file-missing: "File does not exist."
+error-path-blacklisted: "The path is blacklisted."
+error-type-blacklisted: "The file type is blacklisted."
+error-pull-failed: "Git pull completed unsuccessfully."
+error-no-commit-before: "No commit found before the specified date."
+error-commit-is-last: "The found commit is the last commit."

@@ -4,8 +4,10 @@ import org.bukkit.Bukkit;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.List;
 
+import static ml.konstanius.minecicd.Messages.getMessage;
 import static ml.konstanius.minecicd.MineCICD.busy;
 import static ml.konstanius.minecicd.MineCICD.plugin;
 
@@ -43,7 +45,16 @@ public abstract class Script {
                                 Process p = b.start();
                                 ref.result = p.waitFor();
                             } catch (Exception e) {
-                                ref.output = "Script failed on line " + (i + 1) + "\nCommand: " + line + "\n" + e.getMessage();
+                                int finalI = i;
+                                ref.output = getMessage(
+                                        "script-error",
+                                        true,
+                                        new HashMap<>() {{
+                                            put("line", String.valueOf(finalI + 1));
+                                            put("command", line);
+                                            put("error", e.getMessage());
+                                        }}
+                                );
                                 ref.result = 1;
                                 break;
                             }
@@ -52,7 +63,16 @@ public abstract class Script {
                         }
 
                         if (ref.result != 0) {
-                            ref.output = "Script failed on line " + (i + 1) + "\nCommand: " + line + "\nExit code " + ref.result;
+                            int finalI = i;
+                            ref.output = getMessage(
+                                    "script-error",
+                                    true,
+                                    new HashMap<>() {{
+                                        put("line", String.valueOf(finalI + 1));
+                                        put("command", line);
+                                        put("error", "Exited with exit code " + ref.result);
+                                    }}
+                            );
                             break;
                         }
                     }

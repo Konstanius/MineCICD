@@ -69,11 +69,16 @@ allow-restart: true
 # CICD <script> <script-name> (Multiple scripts can be specified)
 # <any other commit message>
 
+# Bossbar setup (No text color support)
+# Support for PINK, BLUE, RED, GREEN, YELLOW, PURPLE, WHITE
+bossbar-command-title: "MineCICD: Processing command (Git  {action})..."
+bossbar-command-color: "WHITE"
+bossbar-webhook-title: "MineCICD: Processing WebHook..."
+bossbar-webhook-color: "WHITE"
+
 # Performance related configuration
 tab-completion: true # This will enable tab completion for the commands, recommended to disable on production servers
 # The bossbar is used to display the current activity of the plugin, hidden if no activity is present
 # It is only visible to users with the permission minecicd.notify
 # It can be toggled with the command /minecicd mute <true / false>
-bossbar: true # Recommended to disable on production servers
-# The default shell used for executing scripts
-shell: "bash" # Recommended to change to "sh" on Windows systems
+bossbar: true # Recommended to disable on production servers, requires a restart for changes to take effect

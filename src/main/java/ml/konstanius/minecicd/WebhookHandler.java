@@ -3,6 +3,8 @@ package ml.konstanius.minecicd;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import org.bukkit.Bukkit;
+import org.bukkit.boss.BarColor;
+import org.bukkit.boss.BarStyle;
 import org.bukkit.plugin.Plugin;
 import org.json.JSONObject;
 
@@ -53,7 +55,17 @@ public class WebhookHandler implements HttpHandler {
                 return;
             }
 
-            MineCICD.bossBar.setTitle("MineCICD: Processing WebHook..:");
+            MineCICD.bossBar.setTitle(Config.getString("bossbar-webhook-title"));
+            BarColor color = BarColor.BLUE;
+            for (BarColor barColor : BarColor.values()) {
+                if (barColor.name().contains(Config.getString("bossbar-webhook-color").toUpperCase())) {
+                    color = barColor;
+                    break;
+                }
+            }
+            MineCICD.bossBar.setColor(color);
+            MineCICD.bossBar.setStyle(BarStyle.SOLID);
+            MineCICD.bossBar.setProgress(1.0);
 
             try {
                 log("Received webhook from " + pusher + " with message: " + message, Level.INFO);

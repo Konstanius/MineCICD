@@ -33,6 +33,8 @@ public abstract class Config {
     public static void reload() {
         MineCICD.plugin.reloadConfig();
         MineCICD.config = MineCICD.plugin.getConfig();
+
+        Messages.loadMessages();
     }
 
     public static void addToList(String path, String value) {

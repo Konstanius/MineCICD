@@ -13,9 +13,11 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
 
+import static ml.konstanius.minecicd.Messages.getMessage;
 import static ml.konstanius.minecicd.MineCICD.*;
 
 public abstract class GitManager {
@@ -128,7 +130,7 @@ public abstract class GitManager {
                 FilesManager.gitSanitizer();
 
                 if (!result.isSuccessful()) {
-                    throw new IOException("Git pull failed");
+                    throw new IOException(getMessage("error-pull-failed", false));
                 }
 
                 generateTabCompleter();
@@ -290,11 +292,14 @@ public abstract class GitManager {
         String lastCommit = Config.getString("last-commit");
         String repositoryUrl = Config.getString("repository-url");
 
-        return new String[]{
-                "MineCICD is operating on branch " + branch,
-                "Repository is " + repositoryUrl,
-                "Last commit: " + (lastCommit.isEmpty() ? "None" : lastCommit),
-        };
+        String message = getMessage("status-message", false,
+                new HashMap<>() {{
+                    put("branch", branch);
+                    put("lastCommit", lastCommit);
+                    put("repository", repositoryUrl);
+        }});
+
+        return message.split("\n");
     }
 
     public static void reset(String commit) throws IOException, GitAPIException {
@@ -385,8 +390,22 @@ public abstract class GitManager {
                 String[] logs = new String[logSize];
                 for (int i = 0; i < logSize; i++) {
                     RevCommit commit = commitsList.get(i);
-                    String mini = "<blue><u><hover:show_text:Click to copy commit revision><click:copy_to_clipboard:" + commit.getName() + ">" + commit.getName().substring(0, 7) + "</click></hover></u></blue> on " + commit.getAuthorIdent().getWhen() + " : " + commit.getShortMessage();
-                    log.add(mini);
+                    String revision = commit.getName();
+                    String revisionShort = revision.substring(0, 7);
+                    String date = commit.getAuthorIdent().getWhen().toString();
+                    String message = commit.getShortMessage();
+                    log.add(
+                            getMessage(
+                                    "log-line",
+                                    false,
+                                    new HashMap<>() {{
+                                        put("revision", revision);
+                                        put("revisionShort", revisionShort);
+                                        put("date", date);
+                                        put("message", message);
+                                    }}
+                            )
+                    );
                     logs[i] = commit.getName();
                 }
                 if (Config.getBoolean("tab-completion")) {
@@ -448,11 +467,11 @@ public abstract class GitManager {
             }
 
             if (commit == null) {
-                throw new IOException("No commit found before the specified date");
+                throw new IOException(getMessage("error-no-commit-before", false));
             }
 
             if (commit.equals(Config.getString("last-commit"))) {
-                throw new IOException("The commit found is the last commit");
+                throw new IOException(getMessage("error-commit-is-last", false));
             }
 
             reset(commit);

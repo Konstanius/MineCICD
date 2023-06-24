@@ -118,26 +118,28 @@ public final class MineCICD extends JavaPlugin {
             }
         });
 
-        // continuous async timer to display BossBar when busy and hide when not
-        Bukkit.getScheduler().runTaskTimerAsynchronously(this, task -> {
-            bossBar.setVisible(Config.getBoolean("bossbar"));
+        Messages.loadMessages();
 
-            if (busy) {
-                for (Player p : Bukkit.getOnlinePlayers()) {
-                    if (p.hasPermission("minecicd.notify") && !muteList.contains(p.getUniqueId().toString())) {
-                        bossBar.addPlayer(p);
-                    } else {
-                        bossBar.removePlayer(p);
-                    }
-                }
-            } else {
-                Bukkit.getOnlinePlayers().forEach(player -> {
+        bossBar.setVisible(false);
+        // continuous async timer to display BossBar when busy and hide when not
+        if (Config.getBoolean("bossbar")) {
+            Bukkit.getScheduler().runTaskTimerAsynchronously(this, task -> {
+                bossBar.setVisible(true);
+                if (busy) {
                     for (Player p : Bukkit.getOnlinePlayers()) {
-                        bossBar.removePlayer(p);
+                        if (p.hasPermission("minecicd.notify") && !muteList.contains(p.getUniqueId().toString())) {
+                            if (!bossBar.getPlayers().contains(p)) {
+                                bossBar.addPlayer(p);
+                            }
+                        } else {
+                            bossBar.removePlayer(p);
+                        }
                     }
-                });
-            }
-        }, 0, 5);
+                } else {
+                    bossBar.removeAll();
+                }
+            }, 20, 5);
+        }
     }
 
     @Override

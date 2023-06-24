@@ -13,6 +13,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.HashSet;
 
+import static ml.konstanius.minecicd.Messages.getMessage;
 import static ml.konstanius.minecicd.MineCICD.logger;
 import static ml.konstanius.minecicd.MineCICD.plugin;
 import static ml.konstanius.minecicd.MineCICD.busy;
@@ -24,7 +25,7 @@ public abstract class FilesManager {
         try {
             File path = new File(plugin.getDataFolder().getAbsolutePath() + "/repo");
             if (!path.exists()) {
-                throw new FileNotFoundException("repo folder does not exist");
+                throw new FileNotFoundException(getMessage("error-repo-missing", false));
             }
 
             File previousFilesFile = new File(plugin.getDataFolder().getAbsolutePath() + "/previousFiles.txt");
@@ -99,7 +100,7 @@ public abstract class FilesManager {
         try {
             File path = new File(plugin.getDataFolder().getAbsolutePath() + "/repo");
             if (!path.exists()) {
-                throw new FileNotFoundException("repo folder does not exist");
+                throw new FileNotFoundException(getMessage("error-repo-missing", false));
             }
 
             gitSanitizer();
@@ -207,7 +208,7 @@ public abstract class FilesManager {
         try {
             File path = new File(plugin.getDataFolder().getAbsolutePath() + "/repo");
             if (!path.exists()) {
-                throw new FileNotFoundException("repo folder does not exist");
+                throw new FileNotFoundException(getMessage("error-repo-missing", false));
             }
 
             boolean changes = GitManager.pullRepo();
@@ -289,7 +290,7 @@ public abstract class FilesManager {
         try {
             File repo = new File(plugin.getDataFolder().getAbsolutePath() + "/repo");
             if (!repo.exists()) {
-                throw new FileNotFoundException("repo folder does not exist");
+                throw new FileNotFoundException(getMessage("error-repo-missing", false));
             }
 
             // check that the file / directory is not blacklisted
@@ -310,7 +311,7 @@ public abstract class FilesManager {
             if (enableBlacklistFiletypes && !isDirectory) {
                 for (String blockedType : blockedTypes) {
                     if (path.endsWith(blockedType)) {
-                        throw new IOException("file type is blacklisted");
+                        throw new IOException(getMessage("error-type-blacklisted", false));
                     }
                 }
             }
@@ -318,7 +319,7 @@ public abstract class FilesManager {
             if (enableBlacklistPaths) {
                 for (String blockedPath : blockedPaths) {
                     if (path.startsWith(blockedPath)) {
-                        throw new IOException("path is blacklisted");
+                        throw new IOException(getMessage("error-path-blacklisted", false));
                     }
                 }
             }
@@ -396,22 +397,13 @@ public abstract class FilesManager {
         try {
             File repo = new File(plugin.getDataFolder().getAbsolutePath() + "/repo");
             if (!repo.exists()) {
-                throw new FileNotFoundException("repo folder does not exist");
+                throw new FileNotFoundException(getMessage("error-repo-missing", false));
             }
             File file = new File(repo.getAbsolutePath() + "/" + path);
-            if (!file.exists()) {
-                System.out.println("1 does not exist");
-            }
 
             mergeToGit();
-            if (!file.exists()) {
-                System.out.println("2 does not exist");
-            }
 
             gitSanitizer();
-            if (!file.exists()) {
-                System.out.println("3 does not exist");
-            }
 
             // count the number of files to be deleted
             int count = countFiles(new File(repo.getAbsolutePath() + "/" + path));
@@ -420,7 +412,7 @@ public abstract class FilesManager {
             ArrayList<File> files = new ArrayList<>();
 
             if (!file.exists()) {
-                throw new FileNotFoundException("file does not exist");
+                throw new FileNotFoundException(getMessage("error-file-missing", false));
             }
 
             if (!file.isDirectory()) {
@@ -517,7 +509,7 @@ public abstract class FilesManager {
 
             File path = new File(plugin.getDataFolder().getAbsolutePath() + "/repo");
             if (!path.exists()) {
-                throw new FileNotFoundException("repo folder does not exist");
+                throw new FileNotFoundException(getMessage("error-repo-missing", false));
             }
 
             String rootOfRepo = path.getAbsolutePath();
