@@ -24,6 +24,10 @@ with support for machine shell commands.
 - Add files to Git Tracking with `/minecicd add <file> <commit message>`
 - Load changes made to the repository with `/minecicd pull`
 
+<hr style="border: 1px solid red;">
+<h3 style="color:red">WARNING! Live Synchronisation is currently in Beta and not tested on release builds. Use at your own risk!</h3>
+<hr style="border: 1px solid red;">
+
 ### Live Synchronisation Setup
 1. Create a webhook for your repository (Repo settings -> Webhooks -> Add webhook)
    - Payload URL: `http://<your server ip>:8080/minecicd` (Port / Path configurable in config.yml)
@@ -48,6 +52,8 @@ CICD <run> <command> (Multiple commands can be specified)
 CICD <script> <script-name> (Multiple scripts can be specified)
 <any other commit message>
 ```
+
+###### End of Live Synchronisation Setup
 
 ## Commands
 - `minecicd clone` - Clones the repo from the remote
