@@ -13,6 +13,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
 import java.util.logging.Level;
 
 import static ml.konstanius.minecicd.MineCICD.*;
@@ -73,6 +74,8 @@ public abstract class GitManager {
             }
 
             FilesManager.generatePreviousFiles();
+
+            generateTabCompleter();
         } finally {
             if (ownsBusy) {
                 busy = false;
@@ -128,6 +131,8 @@ public abstract class GitManager {
                     throw new IOException("Git pull failed");
                 }
 
+                generateTabCompleter();
+
                 return !newCommit.equals(lastCommit);
             }
         } finally {
@@ -169,6 +174,8 @@ public abstract class GitManager {
             }
 
             FilesManager.generatePreviousFiles();
+
+            generateTabCompleter();
         } finally {
             if (ownsBusy) {
                 busy = false;
@@ -203,6 +210,10 @@ public abstract class GitManager {
                 Config.set("last-commit", newCommit);
                 Config.save();
             }
+
+            FilesManager.generatePreviousFiles();
+
+            generateTabCompleter();
         } finally {
             if (ownsBusy) {
                 busy = false;
@@ -245,6 +256,10 @@ public abstract class GitManager {
                 Config.set("last-commit", newCommit);
                 Config.save();
             }
+
+            FilesManager.generatePreviousFiles();
+
+            generateTabCompleter();
         } finally {
             if (ownsBusy) {
                 busy = false;
@@ -261,6 +276,8 @@ public abstract class GitManager {
             } catch (Exception ignored) {
                 git.checkout().setCreateBranch(true).setName(Config.getString("branch")).call();
             }
+
+            generateTabCompleter();
         } finally {
             if (ownsBusy) {
                 busy = false;
@@ -304,6 +321,8 @@ public abstract class GitManager {
                 Config.set("last-commit", newCommit);
                 Config.save();
             }
+
+            generateTabCompleter();
         } finally {
             if (ownsBusy) {
                 busy = false;
@@ -335,6 +354,8 @@ public abstract class GitManager {
                 Config.set("last-commit", newCommit);
                 Config.save();
             }
+
+            generateTabCompleter();
         } finally {
             if (ownsBusy) {
                 busy = false;
@@ -354,15 +375,53 @@ public abstract class GitManager {
 
             try (Git git = Git.open(new File(repoPath))) {
                 Iterable<RevCommit> commits = git.log().call();
+                List<RevCommit> commitsList = new ArrayList<>();
                 for (RevCommit commit : commits) {
-                    String mini = "<blue><u><click:copy_to_clipboard:" + commit.getName() + ">" + commit.getName() + "</click></u></blue> on " + commit.getAuthorIdent().getWhen() + " : " + commit.getShortMessage();
+                    commitsList.add(commit);
+                }
+
+                logSize = commitsList.size();
+
+                String[] logs = new String[logSize];
+                for (int i = 0; i < logSize; i++) {
+                    RevCommit commit = commitsList.get(i);
+                    String mini = "<blue><u><hover:show_text:Click to copy commit revision><click:copy_to_clipboard:" + commit.getName() + ">" + commit.getName().substring(0, 7) + "</click></hover></u></blue> on " + commit.getAuthorIdent().getWhen() + " : " + commit.getShortMessage();
                     log.add(mini);
+                    logs[i] = commit.getName();
+                }
+                if (Config.getBoolean("tab-completion")) {
+                    commitLog = logs;
                 }
             }
         } catch (Exception ignored) {
         }
 
         return log.toArray(new String[0]);
+    }
+
+    public static void getLogSize() {
+        try {
+            String repoPath = plugin.getDataFolder().getAbsolutePath() + "/repo";
+
+            try (Git git = Git.open(new File(repoPath))) {
+                Iterable<RevCommit> commits = git.log().call();
+                List<RevCommit> commitsList = new ArrayList<>();
+                for (RevCommit commit : commits) {
+                    commitsList.add(commit);
+                }
+
+                logSize = commitsList.size();
+
+                String[] log = new String[logSize];
+                for (int i = 0; i < logSize; i++) {
+                    // only add the commit hash
+                    log[i] = commitsList.get(i).getName();
+                }
+                commitLog = log;
+
+            }
+        } catch (Exception ignored) {
+        }
     }
 
     public static void rollback(Calendar date) throws IOException, GitAPIException {
@@ -397,10 +456,22 @@ public abstract class GitManager {
             }
 
             reset(commit);
+
+            generateTabCompleter();
         } finally {
             if (ownsBusy) {
                 busy = false;
             }
         }
+    }
+
+    public static void generateTabCompleter() {
+        if (!Config.getBoolean("tab-completion")) {
+            return;
+        }
+
+        getLogSize();
+        FilesManager.generateRepoFilesCache();
+        FilesManager.generateLocalFilesCache();
     }
 }

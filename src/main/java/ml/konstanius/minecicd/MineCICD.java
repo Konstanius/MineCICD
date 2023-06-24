@@ -2,7 +2,11 @@ package ml.konstanius.minecicd;
 
 import com.sun.net.httpserver.HttpServer;
 import org.bukkit.Bukkit;
+import org.bukkit.boss.BarColor;
+import org.bukkit.boss.BarStyle;
+import org.bukkit.boss.BossBar;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -24,6 +28,11 @@ public final class MineCICD extends JavaPlugin {
     public static boolean busy = false;
     public static Plugin plugin;
     public static HashSet<String> muteList = new HashSet<>();
+    public static int logSize = 0; // Caches the amount of commits
+    public static String[] commitLog = new String[0]; // Caches the commit revision hashes
+    public static HashSet<String> repoFiles = new HashSet<>(); // Caches the files and paths in the repo
+    public static HashSet<String> localFiles = new HashSet<>(); // Caches the files and paths in the local directory
+    public static BossBar bossBar = Bukkit.createBossBar("MineCICD", BarColor.BLUE, BarStyle.SOLID);
 
     @Override
     public void onEnable() {
@@ -48,7 +57,7 @@ public final class MineCICD extends JavaPlugin {
                 webServer.setExecutor(null);
                 webServer.start();
 
-                log("GitMcSync started listening on: http://" + ip + ":" + port + "/" + webhookPath, Level.INFO);
+                log("MineCICD started listening on: http://" + ip + ":" + port + "/" + webhookPath, Level.INFO);
             } else {
                 log("Webhook port is not set. Please set it in config.yml.", Level.WARNING);
             }
@@ -62,21 +71,56 @@ public final class MineCICD extends JavaPlugin {
         // Register commands
         Objects.requireNonNull(this.getCommand("minecicd")).setExecutor(new BaseCommand());
 
-        try {
-            GitManager.checkoutBranch();
+        // Register tab completers
+        Objects.requireNonNull(this.getCommand("minecicd")).setTabCompleter(new BaseCommandTabCompleter());
 
-            boolean changes = GitManager.pullRepo();
-            if (changes) {
-                FilesManager.mergeToLocal();
+
+
+        // async load the files cache
+        Bukkit.getScheduler().runTaskAsynchronously(this, () -> {
+            try {
+                GitManager.checkoutBranch();
+
+                boolean changes = GitManager.pullRepo();
+                if (changes) {
+                    FilesManager.mergeToLocal();
+                } else {
+                    GitManager.generateTabCompleter();
+                }
+            } catch (IOException | GitAPIException ignored) {
             }
-        } catch (IOException | GitAPIException ignored) {
-        }
+        });
+
+        // continuous async timer to display bossbar when busy and hide when not
+        Bukkit.getScheduler().runTaskTimerAsynchronously(this, task -> {
+            if (Config.getBoolean("bossbar")) {
+                bossBar.setVisible(true);
+            } else {
+                bossBar.setVisible(false);
+            }
+
+            if (busy) {
+                for (Player p : Bukkit.getOnlinePlayers()) {
+                    if (p.hasPermission("minecicd.notify") && !muteList.contains(p.getUniqueId().toString())) {
+                        bossBar.addPlayer(p);
+                    } else {
+                        bossBar.removePlayer(p);
+                    }
+                }
+            } else {
+                Bukkit.getOnlinePlayers().forEach(player -> {
+                    for (Player p : Bukkit.getOnlinePlayers()) {
+                        bossBar.removePlayer(p);
+                    }
+                });
+            }
+        }, 0, 5);
     }
 
     @Override
     public void onDisable() {
         webServer.stop(0);
-        log("GitMcSync stopped listening.", Level.INFO);
+        log("MineCICD stopped listening.", Level.INFO);
     }
 
     public static void log(String l, Level level) {

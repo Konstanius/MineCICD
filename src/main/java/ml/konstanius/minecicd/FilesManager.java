@@ -271,6 +271,8 @@ public abstract class FilesManager {
                     }
                     rm.call();
                 }
+
+                GitManager.generateTabCompleter();
             }
 
             generatePreviousFiles();
@@ -685,6 +687,156 @@ public abstract class FilesManager {
         } finally {
             if (ownsBusy) {
                 busy = false;
+            }
+        }
+    }
+
+    public static void generateLocalFilesCache() {
+        File rootFile = plugin.getServer().getWorldContainer();
+        File[] fileList = rootFile.listFiles();
+        if (fileList == null) {
+            return;
+        }
+
+        MineCICD.localFiles.clear();
+        String finalRootPath = rootFile.getAbsolutePath();
+        for (File file : fileList) {
+            try {
+                Files.walkFileTree(file.toPath(), new FileVisitor<>() {
+                    @Override
+                    public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
+                        try {
+                            String relativePath = dir.toAbsolutePath().toString().replace(finalRootPath, "");
+
+                            // skip .git folder
+                            if (relativePath.startsWith(".git")) {
+                                return FileVisitResult.SKIP_SUBTREE;
+                            }
+
+                            // skip /plugins/MineCICD folder
+                            if (relativePath.startsWith("plugins/MineCICD")) {
+                                return FileVisitResult.SKIP_SUBTREE;
+                            }
+                        } catch (NullPointerException ignored) {
+                        }
+
+                        MineCICD.localFiles.add(dir.toAbsolutePath().toString().replace(finalRootPath, "").substring(1));
+
+                        return FileVisitResult.CONTINUE;
+                    }
+
+                    @Override
+                    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
+                        try {
+                            String relativePath = file.toAbsolutePath().toString().replace(finalRootPath, "");
+
+                            // if it isnt a file continue
+                            if (!Files.isRegularFile(file)) {
+                                return FileVisitResult.CONTINUE;
+                            }
+
+                            // skip .git folder
+                            if (relativePath.startsWith(".git")) {
+                                return FileVisitResult.CONTINUE;
+                            }
+
+                            // skip /plugins/MineCICD folder
+                            if (relativePath.startsWith("plugins/MineCICD/")) {
+                                return FileVisitResult.CONTINUE;
+                            }
+
+                            MineCICD.localFiles.add(file.toAbsolutePath().toString().replace(finalRootPath, "").substring(1));
+                        } catch (NullPointerException ignored) {
+                        }
+                        return FileVisitResult.CONTINUE;
+                    }
+
+                    @Override
+                    public FileVisitResult visitFileFailed(Path file, IOException exc) {
+                        return null;
+                    }
+
+                    @Override
+                    public FileVisitResult postVisitDirectory(Path dir, IOException exc) {
+                        return null;
+                    }
+                });
+            } catch (Exception ignored) {
+            }
+        }
+    }
+
+    public static void generateRepoFilesCache() {
+        File rootFile = new File(plugin.getDataFolder().getAbsolutePath() + "/repo");
+        File[] fileList = rootFile.listFiles();
+        if (fileList == null) {
+            return;
+        }
+
+        MineCICD.repoFiles.clear();
+        String finalRootPath = rootFile.getAbsolutePath();
+        for (File file : fileList) {
+            try {
+                Files.walkFileTree(file.toPath(), new FileVisitor<>() {
+                    @Override
+                    public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
+                        try {
+                            String relativePath = dir.toAbsolutePath().toString().replace(finalRootPath, "");
+
+                            // skip .git folder
+                            if (relativePath.startsWith("/.git")) {
+                                return FileVisitResult.SKIP_SUBTREE;
+                            }
+
+                            // skip /plugins/MineCICD folder
+                            if (relativePath.startsWith("/plugins/MineCICD")) {
+                                return FileVisitResult.SKIP_SUBTREE;
+                            }
+                        } catch (NullPointerException ignored) {
+                        }
+
+                        MineCICD.repoFiles.add(dir.toAbsolutePath().toString().replace(finalRootPath, "").substring(1));
+
+                        return FileVisitResult.CONTINUE;
+                    }
+
+                    @Override
+                    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
+                        try {
+                            String relativePath = file.toAbsolutePath().toString().replace(finalRootPath, "");
+
+                            // if it isnt a file continue
+                            if (!Files.isRegularFile(file)) {
+                                return FileVisitResult.CONTINUE;
+                            }
+
+                            // skip .git folder
+                            if (relativePath.startsWith("/.git")) {
+                                return FileVisitResult.CONTINUE;
+                            }
+
+                            // skip /plugins/MineCICD folder
+                            if (relativePath.startsWith("/plugins/MineCICD/")) {
+                                return FileVisitResult.CONTINUE;
+                            }
+
+                            MineCICD.repoFiles.add(file.toAbsolutePath().toString().replace(finalRootPath, "").substring(1));
+                        } catch (NullPointerException ignored) {
+                        }
+                        return FileVisitResult.CONTINUE;
+                    }
+
+                    @Override
+                    public FileVisitResult visitFileFailed(Path file, IOException exc) {
+                        return null;
+                    }
+
+                    @Override
+                    public FileVisitResult postVisitDirectory(Path dir, IOException exc) {
+                        return null;
+                    }
+                });
+            } catch (Exception ignored) {
             }
         }
     }

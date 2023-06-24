@@ -42,6 +42,12 @@ public class BaseCommand implements CommandExecutor {
             return true;
         }
 
+        // close chat for the player
+        if (sender instanceof Player) {
+            ((Player) sender).closeInventory();
+        }
+        MineCICD.bossBar.setTitle("MineCICD: Processing command (Git " + subCommand + ")...");
+
         // start an empty async task
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
             try {
@@ -49,7 +55,7 @@ public class BaseCommand implements CommandExecutor {
                     case "pull" -> {
                         try {
                             if (args.length != 1) {
-                                sender.sendRichMessage("Invalid arguments. Usage: /MineCICD pull");
+                                sender.sendRichMessage("Invalid arguments. Usage: /" + label + " pull");
                                 return;
                             }
 
@@ -69,7 +75,7 @@ public class BaseCommand implements CommandExecutor {
                     case "push" -> {
                         try {
                             if (args.length < 2) {
-                                sender.sendRichMessage("Invalid arguments. Usage: /MineCICD push <commit message>");
+                                sender.sendRichMessage("Invalid arguments. Usage: /" + label + " push <commit message>");
                                 return;
                             }
 
@@ -84,7 +90,7 @@ public class BaseCommand implements CommandExecutor {
                     }
                     case "reload" -> {
                         if (args.length != 1) {
-                            sender.sendRichMessage("Invalid arguments. Usage: /MineCICD reload");
+                            sender.sendRichMessage("Invalid arguments. Usage: /" + label + " reload");
                             return;
                         }
 
@@ -100,7 +106,7 @@ public class BaseCommand implements CommandExecutor {
                     }
                     case "add" -> {
                         if (args.length < 3) {
-                            sender.sendRichMessage("Invalid arguments. Usage: /MineCICD add <file / 'directory/'> <message> (trailing slash is required for directories)");
+                            sender.sendRichMessage("Invalid arguments. Usage: /" + label + " add <file / 'directory/'> <message> (trailing slash is required for directories)");
                             return;
                         }
 
@@ -116,7 +122,7 @@ public class BaseCommand implements CommandExecutor {
                     }
                     case "remove" -> {
                         if (args.length < 3) {
-                            sender.sendRichMessage("Invalid arguments. Usage: /MineCICD remove <file / 'directory/'> <message> (trailing slash is required for directories)");
+                            sender.sendRichMessage("Invalid arguments. Usage: /" + label + " remove <file / 'directory/'> <message> (trailing slash is required for directories)");
                             return;
                         }
 
@@ -132,7 +138,7 @@ public class BaseCommand implements CommandExecutor {
                     }
                     case "clone" -> {
                         if (args.length != 1) {
-                            sender.sendRichMessage("Invalid arguments. Usage: /MineCICD clone");
+                            sender.sendRichMessage("Invalid arguments. Usage: /" + label + " clone");
                             return;
                         }
 
@@ -148,7 +154,7 @@ public class BaseCommand implements CommandExecutor {
                     }
                     case "status" -> {
                         if (args.length != 1) {
-                            sender.sendRichMessage("Invalid arguments. Usage: /MineCICD status");
+                            sender.sendRichMessage("Invalid arguments. Usage: /" + label + " status");
                             return;
                         }
 
@@ -159,7 +165,7 @@ public class BaseCommand implements CommandExecutor {
                     }
                     case "reset" -> {
                         if (args.length < 3) {
-                            sender.sendRichMessage("Invalid arguments. Usage: /MineCICD reset <commit hash / link>");
+                            sender.sendRichMessage("Invalid arguments. Usage: /" + label + " reset <commit hash / link>");
                             return;
                         }
 
@@ -174,7 +180,7 @@ public class BaseCommand implements CommandExecutor {
                     }
                     case "rollback" -> {
                         if (args.length != 3) {
-                            sender.sendRichMessage("Invalid arguments. Usage: /MineCICD rollback <dd-MM-yyyy HH:mm:ss>");
+                            sender.sendRichMessage("Invalid arguments. Usage: /" + label + " rollback <dd-MM-yyyy HH:mm:ss>");
                             return;
                         }
 
@@ -183,13 +189,13 @@ public class BaseCommand implements CommandExecutor {
                         try {
                             calendar.setTime(new SimpleDateFormat("dd-MM-yyyy HH:mm:ss").parse(date));
                         } catch (ParseException e) {
-                            sender.sendRichMessage("Invalid date format. Usage: /MineCICD rollback <dd-MM-yyyy HH:mm:ss>");
+                            sender.sendRichMessage("Invalid date format. Usage: /" + label + " rollback <dd-MM-yyyy HH:mm:ss>");
                             return;
                         }
 
                         // if future
                         if (calendar.after(Calendar.getInstance())) {
-                            sender.sendRichMessage("Invalid date (Is in future). Usage: /MineCICD rollback <dd-MM-yyyy HH:mm:ss>");
+                            sender.sendRichMessage("Invalid date (Is in future). Usage: /" + label + " rollback <dd-MM-yyyy HH:mm:ss>");
                             return;
                         }
 
@@ -204,7 +210,7 @@ public class BaseCommand implements CommandExecutor {
                     }
                     case "revert" -> {
                         if (args.length < 3) {
-                            sender.sendRichMessage("Invalid arguments. Usage: /MineCICD revert <commit hash / link>");
+                            sender.sendRichMessage("Invalid arguments. Usage: /" + label + " revert <commit hash / link>");
                             return;
                         }
 
@@ -219,7 +225,7 @@ public class BaseCommand implements CommandExecutor {
                     }
                     case "log" -> {
                         if (args.length != 2) {
-                            sender.sendRichMessage("Invalid arguments. Usage: /MineCICD log <page>");
+                            sender.sendRichMessage("Invalid arguments. Usage: /" + label + " log <page>");
                             return;
                         }
 
@@ -229,6 +235,9 @@ public class BaseCommand implements CommandExecutor {
                         int maxPage = (int) Math.ceil(lines.length / 10.0);
                         if (page > maxPage) {
                             sender.sendRichMessage("Invalid page number. Max page number is " + maxPage);
+                            return;
+                        } else if (page < 1) {
+                            sender.sendRichMessage("Invalid page number. Min page number is 1");
                             return;
                         }
 
@@ -242,14 +251,14 @@ public class BaseCommand implements CommandExecutor {
                         if (maxPage == 1) {
                             sender.sendRichMessage("===== End of log =====");
                         } else {
-                            String left = page == 1 ? "<- (Beginning)" : " <blue><u><click:run_command:git log " + (page - 1) + "><- ("+ (page - 1) +") </click></u></blue>";
-                            String right = page == maxPage ? "(End) ->" : " <blue><u><click:run_command:git log " + (page + 1) + " >("+ (page + 1) +") -></click></u></blue> > ";
+                            String left = page == 1 ? "<- (Beginning)" : " <blue><u><hover:show_text:Previous page><click:run_command:/git log " + (page - 1) + "><- ("+ (page - 1) +") </click></hover></u></blue>";
+                            String right = page == maxPage ? "(End) ->" : " <blue><u><hover:show_text:Next page><click:run_command:/git log " + (page + 1) + " >("+ (page + 1) +") -></click></hover></u></blue> > ";
                             sender.sendRichMessage("===== " + left + " | " + right + " =====");
                         }
                     }
                     case "mute" -> {
                         if (args.length != 2) {
-                            sender.sendRichMessage("Invalid arguments. Usage: /MineCICD mute <true / false>");
+                            sender.sendRichMessage("Invalid arguments. Usage: /" + label + " mute <true / false>");
                             return;
                         }
 
@@ -259,7 +268,17 @@ public class BaseCommand implements CommandExecutor {
                             return;
                         }
 
-                        boolean mute = Boolean.parseBoolean(args[1]);
+                        String arg = args[1];
+                        boolean mute;
+                        if (arg.equalsIgnoreCase("true") || arg.equalsIgnoreCase("yes") || arg.equalsIgnoreCase("on") || arg.equalsIgnoreCase("1")) {
+                            mute = true;
+                        } else if (arg.equalsIgnoreCase("false") || arg.equalsIgnoreCase("no") || arg.equalsIgnoreCase("off") || arg.equalsIgnoreCase("0")) {
+                            mute = false;
+                        } else {
+                            sender.sendRichMessage("Invalid mute value. Usage: /" + label + " mute <true / false>");
+                            return;
+                        }
+
                         String uuid = ((Player) sender).getUniqueId().toString();
                         if (mute) {
                             sender.sendRichMessage("Muted MineCICD messages");
@@ -271,15 +290,17 @@ public class BaseCommand implements CommandExecutor {
                     }
                     default -> {
                         sender.sendRichMessage("Invalid subcommand. Valid commands:");
-                        sender.sendRichMessage("/MineCICD pull - Pulls the repo from the remote");
-                        sender.sendRichMessage("/MineCICD push <commit message> - Pushes the repo to the remote");
-                        sender.sendRichMessage("/MineCICD add <file> <message> - Adds a file to the repo");
-                        sender.sendRichMessage("/MineCICD clone - Clones the repo from the remote");
-                        sender.sendRichMessage("/MineCICD status - Gets the status of the repo");
-                        sender.sendRichMessage("/MineCICD reset <commit hash / link> - Resets the current branch to a specific commit");
-                        sender.sendRichMessage("/MineCICD revert <commit hash / link> - Reverts a specific commit");
-                        sender.sendRichMessage("/MineCICD log <page> - Lists the commits in the repo");
-                        sender.sendRichMessage("/MineCICD reload - Reloads the config");
+                        sender.sendRichMessage("/" + label + " pull - Pulls the repo from the remote");
+                        sender.sendRichMessage("/" + label + " push <commit message> - Pushes the repo to the remote");
+                        sender.sendRichMessage("/" + label + " add <file> <message> - Adds a file to the repo");
+                        sender.sendRichMessage("/" + label + " remove <file> <message> - Removes a file from the repo");
+                        sender.sendRichMessage("/" + label + " clone - Clones the repo from the remote");
+                        sender.sendRichMessage("/" + label + " status - Gets the status of the repo");
+                        sender.sendRichMessage("/" + label + " reset <commit hash / link> - Resets the current branch to a specific commit");
+                        sender.sendRichMessage("/" + label + " revert <commit hash / link> - Reverts a specific commit");
+                        sender.sendRichMessage("/" + label + " log <page> - Lists the commits in the repo");
+                        sender.sendRichMessage("/" + label + " mute <true / false> - Mutes MineCICD messages");
+                        sender.sendRichMessage("/" + label + " reload - Reloads the config");
                     }
                 }
             } catch (Exception e) {

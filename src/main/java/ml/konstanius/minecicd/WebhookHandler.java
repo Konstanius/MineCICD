@@ -54,6 +54,8 @@ public class WebhookHandler implements HttpHandler {
                 return;
             }
 
+            MineCICD.bossBar.setTitle("MineCICD: Processing WebHook..:");
+
             try {
                 log("Received webhook from " + pusher + " with message: " + message, Level.INFO);
 
