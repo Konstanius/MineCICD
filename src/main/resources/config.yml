@@ -10,6 +10,12 @@ webhook-path: "minecicd"
 webhook-secret: "" # This is the secret used to verify the webhook, it is recommended to change it
 
 # Configuration for the scope of the synchronization
+#####################################################################
+#####                          WARNING                          #####
+#####                                                           #####
+##### Files removed by these filters after having been added to #####
+##### Git can result in unpredictable behaviour. Decide before! #####
+#####################################################################
 enable-whitelist-filetypes: true
 whitelist-filetypes:
   - ".yml"

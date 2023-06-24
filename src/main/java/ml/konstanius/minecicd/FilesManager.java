@@ -349,7 +349,7 @@ public abstract class FilesManager {
 
                 if (!allowed) {
                     // add to the config
-                    Config.addToList("whitelist-paths", path);
+                    Config.addToList("whitelist-paths", "/" + path);
                 }
             }
 
