@@ -7,7 +7,6 @@ last-commit: "" # Do not change this value, it is used to check if the commit is
 # Setup of the webhook used to detect pushes
 webhook-port: 8080 # Set to 0 to disable
 webhook-path: "minecicd"
-webhook-secret: "" # This is the secret used to verify the webhook, it is recommended to change it
 
 # Configuration for the scope of the synchronization
 #####################################################################
