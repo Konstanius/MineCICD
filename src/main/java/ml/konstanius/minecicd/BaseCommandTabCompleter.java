@@ -7,7 +7,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import static ml.konstanius.minecicd.MineCICD.localFiles;
@@ -38,7 +37,7 @@ public class BaseCommandTabCompleter implements TabCompleter {
         int argLength = args.length;
         if (argLength == 1) {
             // Subcommands
-            List<String> list = new java.util.ArrayList<>(List.of("pull", "push", "add", "remove", "clone", "status", "reset", "revert", "log", "reload", "mute"));
+            List<String> list = new java.util.ArrayList<>(List.of("pull", "push", "add", "remove", "clone", "status", "reset", "revert", "log", "reload", "mute", "help", "script"));
             list.removeIf(s -> !sender.hasPermission("minecicd." + s));
             return list;
         } else {
@@ -100,6 +99,14 @@ public class BaseCommandTabCompleter implements TabCompleter {
                         list.add(String.valueOf(i));
                     }
                     return list;
+                }
+                case "script" -> {
+                    // returns the name of scripts defined in plugin data folder / scripts / <name>.txt
+                    if (argLength == 2) {
+                        System.out.println(MineCICD.scripts);
+                        return new ArrayList<>(MineCICD.scripts);
+                    }
+                    return List.of();
                 }
                 case "mute" -> {
                     // Returns true or false

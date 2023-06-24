@@ -11,9 +11,7 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.eclipse.jgit.api.errors.GitAPIException;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.InetSocketAddress;
 import java.net.URL;
 import java.util.HashSet;
@@ -32,6 +30,7 @@ public final class MineCICD extends JavaPlugin {
     public static String[] commitLog = new String[0]; // Caches the commit revision hashes
     public static HashSet<String> repoFiles = new HashSet<>(); // Caches the files and paths in the repo
     public static HashSet<String> localFiles = new HashSet<>(); // Caches the files and paths in the local directory
+    public static HashSet<String> scripts = new HashSet<>(); // Caches the scripts in the scripts directory
     public static BossBar bossBar = Bukkit.createBossBar("MineCICD", BarColor.BLUE, BarStyle.SOLID);
 
     @Override
@@ -74,8 +73,6 @@ public final class MineCICD extends JavaPlugin {
         // Register tab completers
         Objects.requireNonNull(this.getCommand("minecicd")).setTabCompleter(new BaseCommandTabCompleter());
 
-
-
         // async load the files cache
         Bukkit.getScheduler().runTaskAsynchronously(this, () -> {
             try {
@@ -89,15 +86,41 @@ public final class MineCICD extends JavaPlugin {
                 }
             } catch (IOException | GitAPIException ignored) {
             }
+
+            // check if pluginFolder/scripts exists
+            File scriptsFolder = new File(plugin.getDataFolder().getAbsolutePath() + "/scripts");
+            if (!scriptsFolder.exists()) {
+                try {
+                    scriptsFolder.mkdir();
+
+                    // copy example_script.txt from resources to pluginFolder/scripts
+                    InputStream in = plugin.getResource("example_script.txt");
+                    OutputStream out = null;
+                    try {
+                        out = new FileOutputStream(plugin.getDataFolder().getAbsolutePath() + "/scripts/example_script.txt");
+                    } catch (FileNotFoundException e) {
+                        File file = new File(plugin.getDataFolder().getAbsolutePath() + "/scripts/example_script.txt");
+                        file.createNewFile();
+                        out = new FileOutputStream(file);
+                    }
+
+                    byte[] buf = new byte[4096];
+                    int len;
+                    while ((len = in.read(buf)) > 0) {
+                        out.write(buf, 0, len);
+                    }
+
+                    in.close();
+                    out.close();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
         });
 
-        // continuous async timer to display bossbar when busy and hide when not
+        // continuous async timer to display BossBar when busy and hide when not
         Bukkit.getScheduler().runTaskTimerAsynchronously(this, task -> {
-            if (Config.getBoolean("bossbar")) {
-                bossBar.setVisible(true);
-            } else {
-                bossBar.setVisible(false);
-            }
+            bossBar.setVisible(Config.getBoolean("bossbar"));
 
             if (busy) {
                 for (Player p : Bukkit.getOnlinePlayers()) {

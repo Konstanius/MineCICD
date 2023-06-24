@@ -473,5 +473,6 @@ public abstract class GitManager {
         getLogSize();
         FilesManager.generateRepoFilesCache();
         FilesManager.generateLocalFilesCache();
+        FilesManager.generateScriptsCache();
     }
 }

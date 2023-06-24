@@ -50,20 +50,23 @@ blacklist-paths:
 # Webhook listener configuration
 # minecicd.notify is used for identifying who to notify when a webhook event is received
 # Order of execution:
-# 1. Commands are executed with operator permissions
+# 1. Commands / Scripts are executed with operator permissions
 # 2. One of the following is executed (in this order):
 #   - restart
 #   - global reload
 #   - individual reload
-allow-commands: true # This allows to execute commands on the server, it is recommended to disable this on production servers
+allow-commands: true # This allows to execute arbitrary commands on the server, it is recommended to disable this on production servers
+allow-scripts: true # This allows to execute arbitrary CICD scripts on the server, it is recommended to disable this on production servers
 allow-individual-reload: true # This might not work with all plugins, issues will be displayed in the console. It is recommended to disable this on production servers
 allow-global-reload: false # This is highly discouraged, as it can cause issues with many plugins
 allow-restart: true
+# Execution order is top to bottom for commands, scripts and restart / reload
 # Webhook actions can be used by adding commit messages in the following format:
 # CICD <restart>
 # CICD <global-reload>
 # CICD <reload> <plugin-name> (Multiple plugins can be specified)
 # CICD <run> <command> (Multiple commands can be specified)
+# CICD <script> <script-name> (Multiple scripts can be specified)
 # <any other commit message>
 
 # Performance related configuration
@@ -72,3 +75,5 @@ tab-completion: true # This will enable tab completion for the commands, recomme
 # It is only visible to users with the permission minecicd.notify
 # It can be toggled with the command /minecicd mute <true / false>
 bossbar: true # Recommended to disable on production servers
+# The default shell used for executing scripts
+shell: "bash" # Recommended to change to "sh" on Windows systems

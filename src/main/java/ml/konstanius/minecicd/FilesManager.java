@@ -449,6 +449,8 @@ public abstract class FilesManager {
 
             generatePreviousFiles();
 
+            GitManager.generateTabCompleter();
+
             return count;
         } finally {
             if (ownsBusy) {
@@ -577,7 +579,7 @@ public abstract class FilesManager {
                             }
 
                             // Also remove /plugins/MineCICD folder
-                            if (absolutePath.startsWith("/plugins/MineCICD/")) {
+                            if (absolutePath.startsWith("/plugins/MineCICD")) {
                                 FileUtils.deleteDirectory(dir.toFile());
                                 return FileVisitResult.SKIP_SUBTREE;
                             }
@@ -709,12 +711,12 @@ public abstract class FilesManager {
                             String relativePath = dir.toAbsolutePath().toString().replace(finalRootPath, "");
 
                             // skip .git folder
-                            if (relativePath.startsWith(".git")) {
+                            if (relativePath.startsWith("/.git")) {
                                 return FileVisitResult.SKIP_SUBTREE;
                             }
 
                             // skip /plugins/MineCICD folder
-                            if (relativePath.startsWith("plugins/MineCICD")) {
+                            if (relativePath.startsWith("/plugins/MineCICD")) {
                                 return FileVisitResult.SKIP_SUBTREE;
                             }
                         } catch (NullPointerException ignored) {
@@ -736,12 +738,12 @@ public abstract class FilesManager {
                             }
 
                             // skip .git folder
-                            if (relativePath.startsWith(".git")) {
+                            if (relativePath.startsWith("/.git")) {
                                 return FileVisitResult.CONTINUE;
                             }
 
                             // skip /plugins/MineCICD folder
-                            if (relativePath.startsWith("plugins/MineCICD/")) {
+                            if (relativePath.startsWith("/plugins/MineCICD")) {
                                 return FileVisitResult.CONTINUE;
                             }
 
@@ -816,7 +818,7 @@ public abstract class FilesManager {
                             }
 
                             // skip /plugins/MineCICD folder
-                            if (relativePath.startsWith("/plugins/MineCICD/")) {
+                            if (relativePath.startsWith("/plugins/MineCICD")) {
                                 return FileVisitResult.CONTINUE;
                             }
 
@@ -837,6 +839,29 @@ public abstract class FilesManager {
                     }
                 });
             } catch (Exception ignored) {
+            }
+        }
+    }
+
+    public static void generateScriptsCache() {
+        // get plugin data path
+        File rootFile = new File(plugin.getDataFolder().getAbsolutePath() + "/scripts");
+        File[] fileList = rootFile.listFiles();
+        if (fileList == null) {
+            return;
+        }
+
+        MineCICD.scripts.clear();
+        String finalRootPath = rootFile.getAbsolutePath();
+
+        // add all files, remove leading finalRootPath, remove trailing .txt
+        for (File file : fileList) {
+            try {
+                String relativePath = file.toPath().toString().replace(finalRootPath, "");
+                if (relativePath.endsWith(".txt")) {
+                    MineCICD.scripts.add(relativePath.substring(1, relativePath.length() - 4));
+                }
+            } catch (NullPointerException ignored) {
             }
         }
     }

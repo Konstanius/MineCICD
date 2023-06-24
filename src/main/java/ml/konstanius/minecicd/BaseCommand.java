@@ -288,6 +288,22 @@ public class BaseCommand implements CommandExecutor {
                             muteList.remove(uuid);
                         }
                     }
+                    case "script" -> {
+                        if (args.length != 2) {
+                            sender.sendRichMessage("Invalid arguments. Usage: /" + label + " script <script name>");
+                            return;
+                        }
+
+                        String scriptName = args[1];
+
+                        try {
+                            Script.run(scriptName);
+                            sender.sendRichMessage("Script ran successfully");
+                        } catch (Exception e) {
+                            sender.sendRichMessage("Error running script: " + e.getMessage());
+                            e.printStackTrace();
+                        }
+                    }
                     default -> {
                         sender.sendRichMessage("Invalid subcommand. Valid commands:");
                         sender.sendRichMessage("/" + label + " pull - Pulls the repo from the remote");

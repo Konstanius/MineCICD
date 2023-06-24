@@ -4,7 +4,6 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
-import org.eclipse.jgit.api.errors.GitAPIException;
 import org.json.JSONObject;
 
 import java.io.IOException;
@@ -69,10 +68,12 @@ public class WebhookHandler implements HttpHandler {
                 boolean allowIndividualReload = Config.getBoolean("allow-individual-reload");
                 boolean allowGlobalReload = Config.getBoolean("allow-global-reload");
                 boolean allowRestart = Config.getBoolean("allow-restart");
+                boolean allowScripts = Config.getBoolean("allow-scripts");
 
                 String[] lines = message.split("\n");
                 ArrayList<String> individualReload = new ArrayList<>();
                 ArrayList<String> commands = new ArrayList<>();
+                ArrayList<String> scripts = new ArrayList<>();
                 boolean globalReload = false;
                 boolean restart = false;
                 for (String line : lines) {
@@ -88,6 +89,9 @@ public class WebhookHandler implements HttpHandler {
                         } else if (command.startsWith("run")) {
                             String cmd = line.substring(7).trim();
                             commands.add(cmd);
+                        } else if (command.startsWith("script")) {
+                            String script = line.substring(10).trim();
+                            scripts.add(script);
                         }
                     }
                 }
@@ -111,6 +115,19 @@ public class WebhookHandler implements HttpHandler {
                         Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "sudo " + cmd);
                     } catch (Exception e) {
                         e.printStackTrace();
+                    }
+                }
+
+                // run the scripts
+                if (allowScripts) {
+                    for (String script : scripts) {
+                        try {
+                            Script.run(script);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+
+                            // TODO notify about failure of scripts
+                        }
                     }
                 }
 
