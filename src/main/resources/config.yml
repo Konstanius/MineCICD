@@ -32,7 +32,7 @@ blacklist-filetypes:
 # Check returns true if the paths starts with the given path
 # Blacklist overrides whitelist
 # If enable-whitelist-paths is true, only the whitelisted paths will be checked
-enable-whitelist-paths: true
+enable-whitelist-paths: false
 whitelist-paths:
   - "/plugins/"
   - "/spigot.yml"
@@ -42,9 +42,6 @@ whitelist-paths:
 enable-blacklist-paths: false
 blacklist-paths:
   - "/"
-
-# Configuration for the messages
-# TODO
 
 # Webhook listener configuration
 # minecicd.notify is used for identifying who to notify when a webhook event is received
@@ -70,10 +67,10 @@ allow-restart: true
 
 # Bossbar setup (No text color support)
 # Support for PINK, BLUE, RED, GREEN, YELLOW, PURPLE, WHITE
-bossbar-command-title: "MineCICD: Processing command (Git  {action})..."
-bossbar-command-color: "WHITE"
-bossbar-webhook-title: "MineCICD: Processing WebHook..."
-bossbar-webhook-color: "WHITE"
+bossbar-command-title: "MineCICD: Processing command (Git {action})..."
+bossbar-command-color: "YELLOW"
+bossbar-webhook-title: "MineCICD: Processing Webhook..."
+bossbar-webhook-color: "YELLOW"
 
 # Performance related configuration
 tab-completion: true # This will enable tab completion for the commands, recommended to disable on production servers

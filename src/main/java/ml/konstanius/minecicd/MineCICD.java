@@ -144,8 +144,10 @@ public final class MineCICD extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        webServer.stop(0);
-        log("MineCICD stopped listening.", Level.INFO);
+        if (webServer != null) {
+            webServer.stop(0);
+            log("MineCICD stopped listening.", Level.INFO);
+        }
     }
 
     public static void log(String l, Level level) {

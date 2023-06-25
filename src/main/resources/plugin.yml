@@ -1,7 +1,7 @@
 name: MineCICD
 version: '${version}'
 main: ml.konstanius.minecicd.MineCICD
-api-version: '1.20'
+api-version: '1.13'
 prefix: MineCICD
 load: STARTUP
 authors: [Konstanius]

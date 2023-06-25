@@ -7,11 +7,8 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.eclipse.jgit.api.errors.GitAPIException;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -104,7 +101,7 @@ public class BaseCommand implements CommandExecutor {
                                         new HashMap<>() {{put("label", label);}}
                                 ));
                             }
-                        } catch (IOException | GitAPIException e) {
+                        } catch (Exception e) {
                             sender.sendRichMessage(getMessage(
                                     "pull-failed",
                                     true,
@@ -133,7 +130,7 @@ public class BaseCommand implements CommandExecutor {
                                     new HashMap<>() {{put("label", label);}}
                             ));
                             sendManagementMessage(sender);
-                        } catch (IOException | GitAPIException e) {
+                        } catch (Exception e) {
                             sender.sendRichMessage(getMessage(
                                     "push-failed",
                                     true,
@@ -156,7 +153,7 @@ public class BaseCommand implements CommandExecutor {
 
                         try {
                             GitManager.checkoutBranch();
-                        } catch (IOException | GitAPIException e) {
+                        } catch (Exception e) {
                             sender.sendRichMessage(getMessage(
                                     "reload-failed",
                                     true,
@@ -185,7 +182,7 @@ public class BaseCommand implements CommandExecutor {
                                     true,
                                     new HashMap<>() {{put("amount", String.valueOf(amount));}}
                             ));
-                        } catch (IOException | GitAPIException e) {
+                        } catch (Exception e) {
                             sender.sendRichMessage(getMessage(
                                     "add-failed",
                                     true,
@@ -213,7 +210,7 @@ public class BaseCommand implements CommandExecutor {
                                     true,
                                     new HashMap<>() {{put("amount", String.valueOf(amount));}}
                             ));
-                        } catch (IOException | GitAPIException e) {
+                        } catch (Exception e) {
                             sender.sendRichMessage(getMessage(
                                     "remove-failed",
                                     true,
@@ -237,7 +234,7 @@ public class BaseCommand implements CommandExecutor {
                             FilesManager.mergeToLocal();
                             sender.sendRichMessage(getMessage("clone-success", true));
                             sendManagementMessage(sender);
-                        } catch (IOException | GitAPIException e) {
+                        } catch (Exception e) {
                             sender.sendRichMessage(getMessage(
                                     "clone-failed",
                                     true,
@@ -275,7 +272,7 @@ public class BaseCommand implements CommandExecutor {
                             GitManager.reset(args[1]);
                             sender.sendRichMessage(getMessage("reset-success", true));
                             sendManagementMessage(sender);
-                        } catch (IOException | GitAPIException e) {
+                        } catch (Exception e) {
                             sender.sendRichMessage(getMessage(
                                     "reset-failed",
                                     true,
@@ -298,7 +295,7 @@ public class BaseCommand implements CommandExecutor {
                         Calendar calendar = Calendar.getInstance();
                         try {
                             calendar.setTime(new SimpleDateFormat("dd-MM-yyyy HH:mm:ss").parse(date));
-                        } catch (ParseException e) {
+                        } catch (Exception e) {
                             sender.sendRichMessage(getMessage(
                                     "rollback-invalid-date",
                                     true,
@@ -321,7 +318,7 @@ public class BaseCommand implements CommandExecutor {
                             GitManager.rollback(calendar);
                             sender.sendRichMessage(getMessage("rollback-success", true));
                             sendManagementMessage(sender);
-                        } catch (IOException | GitAPIException e) {
+                        } catch (Exception e) {
                             sender.sendRichMessage(getMessage(
                                     "rollback-failed",
                                     true,
@@ -344,7 +341,7 @@ public class BaseCommand implements CommandExecutor {
                             GitManager.revert(args[1]);
                             sender.sendRichMessage(getMessage("revert-success", true));
                             sendManagementMessage(sender);
-                        } catch (IOException | GitAPIException e) {
+                        } catch (Exception e) {
                             sender.sendRichMessage(getMessage(
                                     "revert-failed",
                                     true,

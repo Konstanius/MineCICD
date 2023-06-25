@@ -14,9 +14,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 
 import static ml.konstanius.minecicd.Messages.getMessage;
-import static ml.konstanius.minecicd.MineCICD.logger;
-import static ml.konstanius.minecicd.MineCICD.plugin;
-import static ml.konstanius.minecicd.MineCICD.busy;
+import static ml.konstanius.minecicd.MineCICD.*;
 
 public abstract class FilesManager {
     static void generatePreviousFiles() throws IOException {
@@ -335,7 +333,10 @@ public abstract class FilesManager {
 
                 if (!allowed) {
                     // add to the config
-                    Config.addToList("whitelist-filetypes", path.substring(path.lastIndexOf(".")));
+                    try {
+                        Config.addToList("whitelist-filetypes", path.substring(path.lastIndexOf(".")));
+                    } catch (Exception ignored) {
+                    }
                 }
             }
 
@@ -363,6 +364,9 @@ public abstract class FilesManager {
 
             // copy the file / directory to the repo
             if (pathFile.isDirectory()) {
+                if (path.endsWith("/")) {
+                    path = path.substring(0, path.length() - 1);
+                }
                 FileUtils.copyDirectory(pathFile, new File(repo + "/" + path));
             } else {
                 FileUtils.copyFile(pathFile, new File(repo + "/" + path));
@@ -417,7 +421,7 @@ public abstract class FilesManager {
 
             if (!file.isDirectory()) {
                 files.add(file);
-            } else  {
+            } else {
                 // walk through the directory and add all files to the list
                 Files.walkFileTree(new File(repo.getAbsolutePath() + "/" + path).toPath(), new SimpleFileVisitor<>() {
                     @Override
