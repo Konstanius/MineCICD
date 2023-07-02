@@ -154,10 +154,30 @@ public class WebhookHandler implements HttpHandler {
                     Bukkit.reload();
                 } else if (!individualReload.isEmpty()) {
                     for (String plugin : individualReload) {
-                        Plugin pl = Bukkit.getPluginManager().getPlugin(plugin);
-                        if (pl == null) {
-                            continue;
+                        Plugin pl = null;
+
+                        for (Plugin p : Bukkit.getPluginManager().getPlugins()) {
+                            if (p.getName().equalsIgnoreCase(plugin)) {
+                                pl = p;
+                                break;
+                            }
                         }
+
+                        if (pl == null) {
+                            // get the plugin that starts with the name
+                            for (Plugin p : Bukkit.getPluginManager().getPlugins()) {
+                                if (p.getName().toLowerCase().startsWith(plugin.toLowerCase())) {
+                                    pl = p;
+                                    break;
+                                }
+                            }
+
+                            if (pl == null) {
+                                log("Could not find plugin " + plugin + " to reload", Level.SEVERE);
+                                continue;
+                            }
+                        }
+
                         try {
                             Bukkit.getPluginManager().disablePlugin(pl);
                             Bukkit.getPluginManager().enablePlugin(pl);

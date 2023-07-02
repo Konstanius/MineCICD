@@ -187,6 +187,46 @@ public class BaseCommand implements CommandExecutor {
 
                         String file = args[1];
                         String message = String.join(" ", Arrays.copyOfRange(args, 2, args.length));
+
+                        boolean isDirectory = false;
+                        String path = plugin.getServer().getWorldContainer().getAbsolutePath();
+
+                        String fileCopyPath = path + "/" + file;
+                        if (fileCopyPath.endsWith("/")) {
+                            fileCopyPath = fileCopyPath.substring(0, fileCopyPath.length() - 1);
+                        }
+                        File fileObject = new File(fileCopyPath);
+                        if (!fileObject.exists()) {
+                            sender.sendRichMessage(getMessage(
+                                    "add-failed",
+                                    true,
+                                    new HashMap<>() {{put("error", "File / Directory does not exist.");}}
+                            ));
+                            return;
+                        }
+
+                        if (fileObject.isDirectory()) {
+                            isDirectory = true;
+                        }
+
+                        if (isDirectory && !file.endsWith("/")) {
+                            // error out with "file is directory, directories need trailing slash"
+                            sender.sendRichMessage(getMessage(
+                                    "add-failed",
+                                    true,
+                                    new HashMap<>() {{put("error", "File is a directory. To add directories, add a trailing slash to the file path.");}}
+                            ));
+                            return;
+                        } else if (!isDirectory && file.endsWith("/")) {
+                            // error out with "file is not directory, directories need trailing slash"
+                            sender.sendRichMessage(getMessage(
+                                    "add-failed",
+                                    true,
+                                    new HashMap<>() {{put("error", "File is not a directory. To add files, remove the trailing slash from the file path.");}}
+                            ));
+                            return;
+                        }
+
                         try {
                             int amount = FilesManager.addPath(file, message, sender.getName());
                             sender.sendRichMessage(getMessage(
@@ -215,6 +255,46 @@ public class BaseCommand implements CommandExecutor {
 
                         String file = args[1];
                         String message = String.join(" ", Arrays.copyOfRange(args, 2, args.length));
+
+                        boolean isDirectory = false;
+                        String path = plugin.getServer().getWorldContainer().getAbsolutePath();
+
+                        String fileCopyPath = path + "/" + file;
+                        if (fileCopyPath.endsWith("/")) {
+                            fileCopyPath = fileCopyPath.substring(0, fileCopyPath.length() - 1);
+                        }
+                        File fileObject = new File(fileCopyPath);
+                        if (!fileObject.exists()) {
+                            sender.sendRichMessage(getMessage(
+                                    "add-failed",
+                                    true,
+                                    new HashMap<>() {{put("error", "File / Directory does not exist.");}}
+                            ));
+                            return;
+                        }
+
+                        if (fileObject.isDirectory()) {
+                            isDirectory = true;
+                        }
+
+                        if (isDirectory && !file.endsWith("/")) {
+                            // error out with "file is directory, directories need trailing slash"
+                            sender.sendRichMessage(getMessage(
+                                    "add-failed",
+                                    true,
+                                    new HashMap<>() {{put("error", "File is a directory. To add directories, add a trailing slash to the file path.");}}
+                            ));
+                            return;
+                        } else if (!isDirectory && file.endsWith("/")) {
+                            // error out with "file is not directory, directories need trailing slash"
+                            sender.sendRichMessage(getMessage(
+                                    "add-failed",
+                                    true,
+                                    new HashMap<>() {{put("error", "File is not a directory. To add files, remove the trailing slash from the file path.");}}
+                            ));
+                            return;
+                        }
+
                         try {
                             int amount = FilesManager.removePath(file, message, sender.getName());
                             sender.sendRichMessage(getMessage(
