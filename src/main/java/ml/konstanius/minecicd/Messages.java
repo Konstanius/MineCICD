@@ -8,11 +8,10 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
+import java.util.logging.Level;
 
 import static ml.konstanius.minecicd.MineCICD.muteList;
 
@@ -94,6 +93,9 @@ public abstract class Messages {
 
     public static void loadMessages() {
         try {
+            YamlConfiguration config = new YamlConfiguration();
+            config.load(new InputStreamReader(Objects.requireNonNull(MineCICD.plugin.getResource("messages.yml")), StandardCharsets.UTF_8));
+
             File messagesFile = new File(MineCICD.plugin.getDataFolder().getAbsolutePath() + "/messages.yml");
             if (!messagesFile.exists()) {
                 MineCICD.plugin.saveResource("messages.yml", false);
@@ -105,6 +107,15 @@ public abstract class Messages {
             for (String key : messagesConfig.getKeys(false)) {
                 String value = messagesConfig.getString(key);
                 messages.put(key, translateCodes(value));
+            }
+
+            // check if any keys are missing
+            for (String key : config.getKeys(false)) {
+                if (!messages.containsKey(key)) {
+                    MineCICD.log("Missing message key: " + key, Level.WARNING);
+                    // add it to the end of the file
+                    messages.put(key, translateCodes(config.getString(key)));
+                }
             }
         } catch (IOException | InvalidConfigurationException e) {
             e.printStackTrace();

@@ -77,3 +77,7 @@ error-type-blacklisted: "The file type is blacklisted."
 error-pull-failed: "Git pull completed unsuccessfully."
 error-no-commit-before: "No commit found before the specified date."
 error-commit-is-last: "The found commit is the last commit."
+
+debug-usage: "&cInvalid arguments. Usage: /{label} debug"
+debug-success: "&aSuccessfully uploaded debug information to {url}."
+debug-failed: "&cError uploading debug information: {error}"

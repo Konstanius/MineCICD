@@ -67,8 +67,7 @@ public abstract class GitManager {
                     .call()) {
                 try {
                     String newCommit = git.log().call().iterator().next().getName();
-                    Config.set("last-commit", newCommit);
-                    Config.save();
+                    MineCICD.setCurrentCommit(newCommit);
                 } catch (Exception ignored) {
                 }
 
@@ -97,7 +96,7 @@ public abstract class GitManager {
         busy = true;
         try {
             String token = Config.getString("token");
-            String lastCommit = Config.getString("last-commit");
+            String lastCommit = MineCICD.getCurrentCommit();
 
             // Pull repo and checkout branch
             // Save last commit hash
@@ -124,8 +123,7 @@ public abstract class GitManager {
                         .setRemoteBranchName(Config.getString("branch"))
                         .call();
                 String newCommit = git.log().call().iterator().next().getName();
-                Config.set("last-commit", newCommit);
-                Config.save();
+                MineCICD.setCurrentCommit(newCommit);
 
                 FilesManager.gitSanitizer();
 
@@ -171,8 +169,7 @@ public abstract class GitManager {
                 git.commit().setMessage(message + "\nUser: " + player).call();
                 git.push().setCredentialsProvider(new UsernamePasswordCredentialsProvider(token, "")).call();
                 String newCommit = git.log().call().iterator().next().getName();
-                Config.set("last-commit", newCommit);
-                Config.save();
+                MineCICD.setCurrentCommit(newCommit);
             }
 
             FilesManager.generatePreviousFiles();
@@ -209,8 +206,7 @@ public abstract class GitManager {
                 git.commit().setMessage(message + "\nUser: " + playerName).call();
                 git.push().setCredentialsProvider(new UsernamePasswordCredentialsProvider(token, "")).call();
                 String newCommit = git.log().call().iterator().next().getName();
-                Config.set("last-commit", newCommit);
-                Config.save();
+                MineCICD.setCurrentCommit(newCommit);
             }
 
             FilesManager.generatePreviousFiles();
@@ -255,8 +251,7 @@ public abstract class GitManager {
                 git.commit().setMessage(message + "\nUser: " + playerName).call();
                 git.push().setCredentialsProvider(new UsernamePasswordCredentialsProvider(token, "")).call();
                 String newCommit = git.log().call().iterator().next().getName();
-                Config.set("last-commit", newCommit);
-                Config.save();
+                MineCICD.setCurrentCommit(newCommit);
             }
 
             FilesManager.generatePreviousFiles();
@@ -278,8 +273,6 @@ public abstract class GitManager {
             } catch (Exception ignored) {
                 git.checkout().setCreateBranch(true).setName(Config.getString("branch")).call();
             }
-
-            generateTabCompleter();
         } finally {
             if (ownsBusy) {
                 busy = false;
@@ -289,7 +282,7 @@ public abstract class GitManager {
 
     public static String[] getStatus() {
         String branch = Config.getString("branch");
-        String lastCommit = Config.getString("last-commit");
+        String lastCommit = MineCICD.getCurrentCommit();
         String repositoryUrl = Config.getString("repository-url");
 
         String message = getMessage("status-message", false,
@@ -323,8 +316,7 @@ public abstract class GitManager {
                 git.reset().setMode(ResetCommand.ResetType.HARD).setRef(commit).call();
                 git.push().setCredentialsProvider(new UsernamePasswordCredentialsProvider(token, "")).call();
                 String newCommit = git.log().call().iterator().next().getName();
-                Config.set("last-commit", newCommit);
-                Config.save();
+                MineCICD.setCurrentCommit(newCommit);
             }
 
             generateTabCompleter();
@@ -356,8 +348,7 @@ public abstract class GitManager {
                 git.revert().include(git.getRepository().resolve(commit)).call();
                 git.push().setCredentialsProvider(new UsernamePasswordCredentialsProvider(token, "")).call();
                 String newCommit = git.log().call().iterator().next().getName();
-                Config.set("last-commit", newCommit);
-                Config.save();
+                MineCICD.setCurrentCommit(newCommit);
             }
 
             generateTabCompleter();
@@ -470,7 +461,7 @@ public abstract class GitManager {
                 throw new IOException(getMessage("error-no-commit-before", false));
             }
 
-            if (commit.equals(Config.getString("last-commit"))) {
+            if (commit.equals(MineCICD.getCurrentCommit())) {
                 throw new IOException(getMessage("error-commit-is-last", false));
             }
 

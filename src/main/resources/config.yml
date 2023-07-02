@@ -2,7 +2,6 @@
 repository-url: "" # Without trailing slash (e.g.: https://github.com/Konstanius/MineCICD)
 token: "" # Fine-grained or full access token
 branch: "main" # Specify the branch to sync with, useful for test servers, then using a pull request to sync with the main server
-last-commit: "" # Do not change this value, it is used to check if the commit is outdated
 
 # Setup of the webhook used to detect pushes
 webhook-port: 8080 # Set to 0 to disable

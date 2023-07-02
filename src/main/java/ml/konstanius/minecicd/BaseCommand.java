@@ -6,13 +6,24 @@ import org.bukkit.boss.BarStyle;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
+import org.json.JSONObject;
 
+import java.io.*;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.stream.Collectors;
 
 import static ml.konstanius.minecicd.Messages.getMessage;
 import static ml.konstanius.minecicd.Messages.sendManagementMessage;
@@ -150,6 +161,7 @@ public class BaseCommand implements CommandExecutor {
                         }
 
                         Config.reload();
+                        MineCICD.startWebServer();
 
                         try {
                             GitManager.checkoutBranch();
@@ -510,6 +522,100 @@ public class BaseCommand implements CommandExecutor {
                             e.printStackTrace();
                         }
                     }
+                    case "debug" -> {
+                        if (args.length != 1) {
+                            sender.sendRichMessage(getMessage(
+                                    "debug-usage",
+                                    true,
+                                    new HashMap<>() {{put("label", label);}}
+                            ));
+                            return;
+                        }
+
+                        StringBuilder builder = new StringBuilder();
+                        // date and version
+                        builder.append("Date: ").append(new Date()).append("\n");
+                        builder.append("Version: ").append(plugin.getDescription().getVersion()).append("\n");
+                        
+                        // config
+                        builder.append("Config: ").append("\n");
+                        // read from plugin/config.yml
+                        try {
+                            FileConfiguration config = plugin.getConfig();
+                            for (String key : config.getKeys(true)) {
+                                builder.append(key).append(": ").append(config.get(key)).append("\n");
+                            }
+                        } catch (Exception e) {
+                            builder.append("Failed to read config.yml: ").append(e.getMessage()).append("\n");
+                        }
+                        
+                        // messages.yml
+                        builder.append("Messages: ").append("\n");
+                        // read from plugin/messages.yml
+                        try {
+                            File messagesFile = new File(plugin.getDataFolder(), "messages.yml");
+                            builder.append(Files.readString(messagesFile.toPath())).append("\n");
+                        } catch (Exception e) {
+                            builder.append("Failed to read messages.yml: ").append(e.getMessage()).append("\n");
+                        }
+
+                        // file tree
+                        builder.append("File tree: ").append("\n");
+                        // start at world path
+
+                        String rootPath = plugin.getServer().getWorldContainer().getAbsolutePath().replace("/.", "");
+
+                        if (!rootPath.endsWith("/")) {
+                            rootPath += "/";
+                        }
+
+                        try {
+                            String finalRootPath = rootPath;
+                            Files.walk(Paths.get(rootPath)).forEach(path -> builder.append(path.toString().replace(finalRootPath, "")).append("\n"));
+                        } catch (Exception e) {
+                            builder.append("Failed to read file tree: ").append(e.getMessage()).append("\n");
+                        }
+
+                        // previousFiles.txt
+                        builder.append("Previous files: ").append("\n");
+                        // read from plugin/previousFiles.txt
+                        try {
+                            File previousFilesFile = new File(plugin.getDataFolder(), "previousFiles.txt");
+                            builder.append(Files.readString(previousFilesFile.toPath())).append("\n");
+                        } catch (Exception e) {
+                            builder.append("Failed to read previousFiles.txt: ").append(e.getMessage()).append("\n");
+                        }
+
+                        String url = "https://api.mclo.gs/1/log";
+                        String charset = StandardCharsets.UTF_8.name();
+                        String content = builder.toString();
+                        String query = String.format("content=%s", URLEncoder.encode(content, charset));
+                        HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
+                        connection.setRequestMethod("POST");
+                        connection.setRequestProperty("Accept-Charset", charset);
+                        connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded;charset=" + charset);
+                        connection.setRequestProperty("User-Agent", "Minecraft/" + plugin.getServer().getVersion());
+                        connection.setDoOutput(true);
+                        try (OutputStream output = connection.getOutputStream()) {
+                            output.write(query.getBytes(charset));
+                        }
+                        InputStream response = connection.getInputStream();
+                        String responseString = new BufferedReader(new InputStreamReader(response, charset)).lines().collect(Collectors.joining("\n"));
+                        JSONObject responseJson = new JSONObject(responseString);
+                        if (responseJson.getBoolean("success")) {
+                            sender.sendRichMessage(getMessage(
+                                    "debug-success",
+                                    true,
+                                    new HashMap<>() {{put("url", responseJson.getString("url"));}
+                            }));
+                        } else {
+                            sender.sendRichMessage(getMessage(
+                                    "debug-failed",
+                                    true,
+                                    new HashMap<>() {{put("error", responseJson.getString("error"));}
+                            }));
+                        }
+                    }
                     default -> {
                         if (!subCommand.equals("help")) {
                             sender.sendRichMessage("Invalid subcommand. Valid commands:");
@@ -526,6 +632,7 @@ public class BaseCommand implements CommandExecutor {
                         sender.sendRichMessage("/" + label + " status - Gets the status of the repo");
                         sender.sendRichMessage("/" + label + " mute <true / false> - Mutes MineCICD messages");
                         sender.sendRichMessage("/" + label + " reload - Reloads the config");
+                        sender.sendRichMessage("/" + label + " debug - Dumps debug info to a paste site");
                     }
                 }
             } catch (Exception e) {

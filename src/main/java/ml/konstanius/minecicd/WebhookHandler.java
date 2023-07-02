@@ -49,6 +49,11 @@ public class WebhookHandler implements HttpHandler {
 
         String pusher = json.getJSONObject("pusher").getString("name");
         String message = json.getJSONObject("head_commit").getString("message");
+        String head = json.getJSONObject("head_commit").getString("id");
+        // check if head is different from last commit
+        if (head.equals(MineCICD.getCurrentCommit())) {
+            return;
+        }
 
         Bukkit.getScheduler().runTaskTimerAsynchronously(MineCICD.plugin, task -> {
             if (busy) {

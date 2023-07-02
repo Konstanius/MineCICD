@@ -371,11 +371,12 @@ public abstract class FilesManager {
                         if (f.isFile()) {
 
                             // check that the file respects the filters
-                            boolean allowed = true;
+                            boolean blacklisted = false;
+                            boolean allowed = false;
                             if (enableBlacklistFiletypes) {
                                 for (String blockedType : blockedTypes) {
                                     if (f.getName().endsWith(blockedType)) {
-                                        allowed = false;
+                                        blacklisted = true;
                                         break;
                                     }
                                 }
@@ -384,7 +385,7 @@ public abstract class FilesManager {
                             if (enableBlacklistPaths) {
                                 for (String blockedPath : blockedPaths) {
                                     if (f.getAbsolutePath().startsWith(blockedPath)) {
-                                        allowed = false;
+                                        blacklisted = true;
                                         break;
                                     }
                                 }
@@ -408,7 +409,7 @@ public abstract class FilesManager {
                                 }
                             }
 
-                            if (allowed) {
+                            if (allowed && !blacklisted) {
                                 files.add(f);
                             }
                         }
@@ -743,150 +744,35 @@ public abstract class FilesManager {
 
     public static void generateLocalFilesCache() {
         File rootFile = plugin.getServer().getWorldContainer();
-        File[] fileList = rootFile.listFiles();
-        if (fileList == null) {
-            return;
-        }
-
-        MineCICD.localFiles.clear();
-        String finalRootPath = rootFile.getAbsolutePath();
-        for (File file : fileList) {
-            try {
-                Files.walkFileTree(file.toPath(), new FileVisitor<>() {
-                    @Override
-                    public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
-                        try {
-                            String relativePath = dir.toAbsolutePath().toString().replace(finalRootPath, "");
-
-                            // skip .git folder
-                            if (relativePath.startsWith("/.git")) {
-                                return FileVisitResult.SKIP_SUBTREE;
-                            }
-
-                            // skip /plugins/MineCICD folder
-                            if (relativePath.startsWith("/plugins/MineCICD")) {
-                                return FileVisitResult.SKIP_SUBTREE;
-                            }
-                        } catch (NullPointerException ignored) {
-                        }
-
-                        MineCICD.localFiles.add(dir.toAbsolutePath().toString().replace(finalRootPath, "").substring(1));
-
-                        return FileVisitResult.CONTINUE;
-                    }
-
-                    @Override
-                    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
-                        try {
-                            String relativePath = file.toAbsolutePath().toString().replace(finalRootPath, "");
-
-                            // if it isnt a file continue
-                            if (!Files.isRegularFile(file)) {
-                                return FileVisitResult.CONTINUE;
-                            }
-
-                            // skip .git folder
-                            if (relativePath.startsWith("/.git")) {
-                                return FileVisitResult.CONTINUE;
-                            }
-
-                            // skip /plugins/MineCICD folder
-                            if (relativePath.startsWith("/plugins/MineCICD")) {
-                                return FileVisitResult.CONTINUE;
-                            }
-
-                            MineCICD.localFiles.add(file.toAbsolutePath().toString().replace(finalRootPath, "").substring(1));
-                        } catch (NullPointerException ignored) {
-                        }
-                        return FileVisitResult.CONTINUE;
-                    }
-
-                    @Override
-                    public FileVisitResult visitFileFailed(Path file, IOException exc) {
-                        return null;
-                    }
-
-                    @Override
-                    public FileVisitResult postVisitDirectory(Path dir, IOException exc) {
-                        return null;
-                    }
-                });
-            } catch (Exception ignored) {
-            }
-        }
+        generateFilesCache(rootFile, localFiles);
     }
 
     public static void generateRepoFilesCache() {
         File rootFile = new File(plugin.getDataFolder().getAbsolutePath() + "/repo");
-        File[] fileList = rootFile.listFiles();
-        if (fileList == null) {
-            return;
-        }
+        generateFilesCache(rootFile, repoFiles);
+    }
 
-        MineCICD.repoFiles.clear();
+    public static void generateFilesCache(File rootFile, HashSet<String> cache) {
+        List<File> files = getFilesInDirectory(rootFile);
+        cache.clear();
         String finalRootPath = rootFile.getAbsolutePath();
-        for (File file : fileList) {
+        for (File file : files) {
             try {
-                Files.walkFileTree(file.toPath(), new FileVisitor<>() {
-                    @Override
-                    public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
-                        try {
-                            String relativePath = dir.toAbsolutePath().toString().replace(finalRootPath, "");
+                String relativePath = file.getAbsolutePath().replace(finalRootPath, "");
 
-                            // skip .git folder
-                            if (relativePath.startsWith("/.git")) {
-                                return FileVisitResult.SKIP_SUBTREE;
-                            }
+                // skip .git folder
+                if (relativePath.startsWith("/.git")) {
+                    continue;
+                }
 
-                            // skip /plugins/MineCICD folder
-                            if (relativePath.startsWith("/plugins/MineCICD")) {
-                                return FileVisitResult.SKIP_SUBTREE;
-                            }
-                        } catch (NullPointerException ignored) {
-                        }
+                // skip /plugins/MineCICD folder
+                if (relativePath.startsWith("/plugins/MineCICD")) {
+                    continue;
+                }
 
-                        MineCICD.repoFiles.add(dir.toAbsolutePath().toString().replace(finalRootPath, "").substring(1));
-
-                        return FileVisitResult.CONTINUE;
-                    }
-
-                    @Override
-                    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
-                        try {
-                            String relativePath = file.toAbsolutePath().toString().replace(finalRootPath, "");
-
-                            // if it isnt a file continue
-                            if (!Files.isRegularFile(file)) {
-                                return FileVisitResult.CONTINUE;
-                            }
-
-                            // skip .git folder
-                            if (relativePath.startsWith("/.git")) {
-                                return FileVisitResult.CONTINUE;
-                            }
-
-                            // skip /plugins/MineCICD folder
-                            if (relativePath.startsWith("/plugins/MineCICD")) {
-                                return FileVisitResult.CONTINUE;
-                            }
-
-                            MineCICD.repoFiles.add(file.toAbsolutePath().toString().replace(finalRootPath, "").substring(1));
-                        } catch (NullPointerException ignored) {
-                        }
-                        return FileVisitResult.CONTINUE;
-                    }
-
-                    @Override
-                    public FileVisitResult visitFileFailed(Path file, IOException exc) {
-                        return null;
-                    }
-
-                    @Override
-                    public FileVisitResult postVisitDirectory(Path dir, IOException exc) {
-                        return null;
-                    }
-                });
-            } catch (Exception ignored) {
+                cache.add(file.getAbsolutePath().replace(finalRootPath, "").substring(1));
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         }
     }
@@ -912,5 +798,30 @@ public abstract class FilesManager {
             } catch (NullPointerException ignored) {
             }
         }
+    }
+
+    public static List<File> getFilesInDirectory(File rootFile) {
+        if (!rootFile.exists()) {
+            return new ArrayList<>();
+        } else if (!rootFile.isDirectory()) {
+            return new ArrayList<>();
+        }
+
+        File[] fileList = rootFile.listFiles();
+        if (fileList == null) {
+            return new ArrayList<>();
+        }
+
+        List<File> files = new ArrayList<>();
+        for (File file : fileList) {
+            if (file.isDirectory()) {
+                files.addAll(getFilesInDirectory(file));
+                files.add(file);
+            } else {
+                files.add(file);
+            }
+        }
+
+        return files;
     }
 }

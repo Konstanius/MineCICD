@@ -39,31 +39,7 @@ public final class MineCICD extends JavaPlugin {
         config = getConfig();
         plugin = this;
 
-        try {
-            int port = Config.getInt("webhook-port");
-            if (port != 0) {
-                URL whatismyip = new URL("https://checkip.amazonaws.com");
-                BufferedReader in = new BufferedReader(new InputStreamReader(whatismyip.openStream()));
-                String ip = in.readLine();
-
-                String webhookPath = Config.getString("webhook-path");
-                if (webhookPath.startsWith("/")) {
-                    webhookPath = webhookPath.substring(1);
-                }
-
-                webServer = HttpServer.create(new InetSocketAddress(port), 0);
-                webServer.createContext("/" + webhookPath, new WebhookHandler());
-                webServer.setExecutor(null);
-                webServer.start();
-
-                log("MineCICD started listening on: http://" + ip + ":" + port + "/" + webhookPath, Level.INFO);
-            } else {
-                log("Webhook port is not set. Please set it in config.yml.", Level.WARNING);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            log("Failed to start webhook server. Please check your config.yml.", Level.SEVERE);
-        }
+        startWebServer();
 
         // TODO register events in the future
 
@@ -81,8 +57,6 @@ public final class MineCICD extends JavaPlugin {
                 boolean changes = GitManager.pullRepo();
                 if (changes) {
                     FilesManager.mergeToLocal();
-                } else {
-                    GitManager.generateTabCompleter();
                 }
             } catch (IOException | GitAPIException ignored) {
             }
@@ -152,5 +126,63 @@ public final class MineCICD extends JavaPlugin {
 
     public static void log(String l, Level level) {
         logger.log(level, l);
+    }
+
+    public static void startWebServer() {
+        try {
+            int port = Config.getInt("webhook-port");
+            if (webServer != null) {
+                webServer.stop(0);
+                log("MineCICD stopped listening.", Level.INFO);
+            }
+            if (port != 0) {
+
+                URL whatismyip = new URL("https://checkip.amazonaws.com");
+                BufferedReader in = new BufferedReader(new InputStreamReader(whatismyip.openStream()));
+                String ip = in.readLine();
+
+                String webhookPath = Config.getString("webhook-path");
+                if (webhookPath.startsWith("/")) {
+                    webhookPath = webhookPath.substring(1);
+                }
+
+                webServer = HttpServer.create(new InetSocketAddress(port), 0);
+                webServer.createContext("/" + webhookPath, new WebhookHandler());
+                webServer.setExecutor(null);
+                webServer.start();
+
+                log("MineCICD started listening on: http://" + ip + ":" + port + "/" + webhookPath, Level.INFO);
+            } else {
+                log("Webhook port is set to not start.", Level.INFO);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            log("Failed to start webhook server. Please check your config.yml.", Level.SEVERE);
+        }
+    }
+
+    public static String getCurrentCommit() {
+        try {
+            BufferedReader reader = new BufferedReader(new FileReader(plugin.getDataFolder().getAbsolutePath() + "/lastCommit.txt"));
+            String commit = reader.readLine();
+            reader.close();
+            return commit;
+        } catch (IOException ignored) {
+            return "null";
+        }
+    }
+
+    public static void setCurrentCommit(String commit) {
+        try {
+            File file = new File(plugin.getDataFolder().getAbsolutePath() + "/lastCommit.txt");
+            if (!file.exists()) {
+                file.createNewFile();
+            }
+
+            BufferedWriter writer = new BufferedWriter(new FileWriter(plugin.getDataFolder().getAbsolutePath() + "/lastCommit.txt"));
+            writer.write(commit);
+            writer.close();
+        } catch (IOException ignored) {
+        }
     }
 }
