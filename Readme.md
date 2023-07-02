@@ -67,6 +67,7 @@ CICD <script> <script-name> (Multiple scripts can be specified)
 - `minecicd log <page>` - Lists the commits in the repo
 - `minecicd status` - Gets the status of the repo
 - `minecicd mute <true / false>` - Mutes MineCICD messages
+- `minecicd debug` - Post a dump of debug information to a paste service
 - `minecicd reload` - Reloads the config
 - `minecicd help` - Shows the help message
 
