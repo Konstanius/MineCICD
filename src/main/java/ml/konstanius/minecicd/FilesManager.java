@@ -12,6 +12,7 @@ import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 
 import static ml.konstanius.minecicd.Messages.getMessage;
 import static ml.konstanius.minecicd.MineCICD.*;
@@ -355,39 +356,90 @@ public abstract class FilesManager {
                 }
             }
 
-            String root = plugin.getServer().getWorldContainer().getAbsolutePath().replace("/.", "");
-            if (!root.endsWith("/")) {
-                root += "/";
+            List<File> files = new ArrayList<>();
+            if (!isDirectory) {
+                files.add(new File(plugin.getServer().getWorldContainer().getAbsolutePath().replace("/.", "") + "/" + path));
+            } else {
+                // recursively add the files that respect the filters of types and paths
+                File directory = new File(plugin.getServer().getWorldContainer().getAbsolutePath().replace("/.", "") + "/" + path);
+
+                // walk the directory tree
+                Files.walkFileTree(directory.toPath(), new SimpleFileVisitor<>() {
+                    @Override
+                    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
+                        File f = file.toFile();
+                        if (f.isFile()) {
+
+                            // check that the file respects the filters
+                            boolean allowed = true;
+                            if (enableBlacklistFiletypes) {
+                                for (String blockedType : blockedTypes) {
+                                    if (f.getName().endsWith(blockedType)) {
+                                        allowed = false;
+                                        break;
+                                    }
+                                }
+                            }
+
+                            if (enableBlacklistPaths) {
+                                for (String blockedPath : blockedPaths) {
+                                    if (f.getAbsolutePath().startsWith(blockedPath)) {
+                                        allowed = false;
+                                        break;
+                                    }
+                                }
+                            }
+
+                            if (enableWhitelistFiletypes) {
+                                for (String allowedType : allowedTypes) {
+                                    if (f.getName().endsWith(allowedType)) {
+                                        allowed = true;
+                                        break;
+                                    }
+                                }
+                            }
+
+                            if (enableWhitelistPaths) {
+                                for (String allowedPath : allowedPaths) {
+                                    if (f.getAbsolutePath().startsWith(allowedPath)) {
+                                        allowed = true;
+                                        break;
+                                    }
+                                }
+                            }
+
+                            if (allowed) {
+                                files.add(f);
+                            }
+                        }
+                        return FileVisitResult.CONTINUE;
+                    }
+                });
             }
 
-            File pathFile = new File(root + path);
+            String root = plugin.getServer().getWorldContainer().getAbsolutePath().replace("/.", "");
+            if (root.endsWith("/")) {
+                root = root.substring(0, root.length() - 1);
+            }
 
-            // copy the file / directory to the repo
-            if (pathFile.isDirectory()) {
-                if (path.endsWith("/")) {
-                    path = path.substring(0, path.length() - 1);
+            // copy the files to the repo
+            for (File file : files) {
+                String relativePath = file.getAbsolutePath().replace(root, "");
+                File repoFile = new File(repo.getAbsolutePath() + "/" + relativePath);
+                if (!repoFile.getParentFile().exists()) {
+                    repoFile.getParentFile().mkdirs();
                 }
-                FileUtils.copyDirectory(pathFile, new File(repo + "/" + path));
-            } else {
-                FileUtils.copyFile(pathFile, new File(repo + "/" + path));
+                FileUtils.copyFile(file, repoFile);
             }
 
             // sanitize the repo
             gitSanitizer();
 
-            // count the number of files added
-            int count;
-            if (pathFile.isDirectory()) {
-                count = countFiles(pathFile);
-            } else {
-                count = 1;
-            }
-
             // add to git
             File addedFile = new File(repo.getAbsolutePath() + "/" + path);
             GitManager.add(addedFile, message, playerName);
 
-            return count;
+            return files.size();
         } finally {
             if (ownsBusy) {
                 busy = false;

@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/IdeaProjects.MineCICD.main.iml" filepath="$PROJECT_DIR$/.idea/modules/IdeaProjects.MineCICD.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Java Projects.MineCICD.main.iml" filepath="$PROJECT_DIR$/.idea/modules/Java Projects.MineCICD.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/MineCICD.main.iml" filepath="$PROJECT_DIR$/.idea/modules/MineCICD.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/ml.konstanius.MineCICD.main.iml" filepath="$PROJECT_DIR$/.idea/modules/ml.konstanius.MineCICD.main.iml" />
     </modules>
