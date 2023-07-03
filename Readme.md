@@ -45,11 +45,11 @@ You can define commit actions as follows:
 ```yaml
 # Execution order is top to bottom for commands, scripts and restart / reload
 # Only one of restart / global-reload / reload (plugin(s)) is performed.
-CICD <restart>
-CICD <global-reload>
-CICD <reload> <plugin-name> (Multiple plugins can be specified)
-CICD <run> <command> (Multiple commands can be specified)
-CICD <script> <script-name> (Multiple scripts can be specified)
+CICD restart (Restart the server, if a restart script is setup)
+CICD global-reload (Reload all plugins)
+CICD reload <plugin-name> (Multiple plugins via separate lines can be specified)
+CICD run <command> (Multiple commands via separate lines can be specified)
+CICD script <script-name> (Multiple scripts via separate lines can be specified)
 <any other commit message>
 ```
 

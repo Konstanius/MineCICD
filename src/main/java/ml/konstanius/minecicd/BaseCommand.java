@@ -48,7 +48,9 @@ public class BaseCommand implements CommandExecutor {
             sender.sendRichMessage(getMessage(
                     "no-permission",
                     true,
-                    new HashMap<>() {{put("label", label);}}
+                    new HashMap<>() {{
+                        put("label", label);
+                    }}
             ));
             return true;
         }
@@ -57,7 +59,9 @@ public class BaseCommand implements CommandExecutor {
             sender.sendRichMessage(getMessage(
                     "busy",
                     true,
-                    new HashMap<>() {{put("label", label);}}
+                    new HashMap<>() {{
+                        put("label", label);
+                    }}
             ));
             return true;
         }
@@ -91,7 +95,9 @@ public class BaseCommand implements CommandExecutor {
                                 sender.sendRichMessage(getMessage(
                                         "pull-usage",
                                         true,
-                                        new HashMap<>() {{put("label", label);}}
+                                        new HashMap<>() {{
+                                            put("label", label);
+                                        }}
                                 ));
                                 return;
                             }
@@ -102,21 +108,27 @@ public class BaseCommand implements CommandExecutor {
                                 sender.sendRichMessage(getMessage(
                                         "pull-success",
                                         true,
-                                        new HashMap<>() {{put("label", label);}}
+                                        new HashMap<>() {{
+                                            put("label", label);
+                                        }}
                                 ));
                                 sendManagementMessage(sender);
                             } else {
                                 sender.sendRichMessage(getMessage(
                                         "pull-no-changes",
                                         true,
-                                        new HashMap<>() {{put("label", label);}}
+                                        new HashMap<>() {{
+                                            put("label", label);
+                                        }}
                                 ));
                             }
                         } catch (Exception e) {
                             sender.sendRichMessage(getMessage(
                                     "pull-failed",
                                     true,
-                                    new HashMap<>() {{put("error", e.getMessage());}}
+                                    new HashMap<>() {{
+                                        put("error", e.getMessage());
+                                    }}
                             ));
                             e.printStackTrace();
                         }
@@ -127,7 +139,9 @@ public class BaseCommand implements CommandExecutor {
                                 sender.sendRichMessage(getMessage(
                                         "push-usage",
                                         true,
-                                        new HashMap<>() {{put("label", label);}}
+                                        new HashMap<>() {{
+                                            put("label", label);
+                                        }}
                                 ));
                                 return;
                             }
@@ -138,14 +152,17 @@ public class BaseCommand implements CommandExecutor {
                             sender.sendRichMessage(getMessage(
                                     "push-success",
                                     true,
-                                    new HashMap<>() {{put("label", label);}}
+                                    new HashMap<>() {{
+                                        put("label", label);
+                                    }}
                             ));
-                            sendManagementMessage(sender);
                         } catch (Exception e) {
                             sender.sendRichMessage(getMessage(
                                     "push-failed",
                                     true,
-                                    new HashMap<>() {{put("error", e.getMessage());}}
+                                    new HashMap<>() {{
+                                        put("error", e.getMessage());
+                                    }}
                             ));
                             e.printStackTrace();
                         }
@@ -155,7 +172,9 @@ public class BaseCommand implements CommandExecutor {
                             sender.sendRichMessage(getMessage(
                                     "reload-usage",
                                     true,
-                                    new HashMap<>() {{put("label", label);}}
+                                    new HashMap<>() {{
+                                        put("label", label);
+                                    }}
                             ));
                             return;
                         }
@@ -169,7 +188,9 @@ public class BaseCommand implements CommandExecutor {
                             sender.sendRichMessage(getMessage(
                                     "reload-failed",
                                     true,
-                                    new HashMap<>() {{put("error", e.getMessage());}}
+                                    new HashMap<>() {{
+                                        put("error", e.getMessage());
+                                    }}
                             ));
                             return;
                         }
@@ -180,7 +201,9 @@ public class BaseCommand implements CommandExecutor {
                             sender.sendRichMessage(getMessage(
                                     "add-usage",
                                     true,
-                                    new HashMap<>() {{put("label", label);}}
+                                    new HashMap<>() {{
+                                        put("label", label);
+                                    }}
                             ));
                             return;
                         }
@@ -200,7 +223,9 @@ public class BaseCommand implements CommandExecutor {
                             sender.sendRichMessage(getMessage(
                                     "add-failed",
                                     true,
-                                    new HashMap<>() {{put("error", "File / Directory does not exist.");}}
+                                    new HashMap<>() {{
+                                        put("error", "File / Directory does not exist.");
+                                    }}
                             ));
                             return;
                         }
@@ -214,7 +239,9 @@ public class BaseCommand implements CommandExecutor {
                             sender.sendRichMessage(getMessage(
                                     "add-failed",
                                     true,
-                                    new HashMap<>() {{put("error", "File is a directory. To add directories, add a trailing slash to the file path.");}}
+                                    new HashMap<>() {{
+                                        put("error", "File is a directory. To add directories, add a trailing slash to the file path.");
+                                    }}
                             ));
                             return;
                         } else if (!isDirectory && file.endsWith("/")) {
@@ -222,7 +249,9 @@ public class BaseCommand implements CommandExecutor {
                             sender.sendRichMessage(getMessage(
                                     "add-failed",
                                     true,
-                                    new HashMap<>() {{put("error", "File is not a directory. To add files, remove the trailing slash from the file path.");}}
+                                    new HashMap<>() {{
+                                        put("error", "File is not a directory. To add files, remove the trailing slash from the file path.");
+                                    }}
                             ));
                             return;
                         }
@@ -232,13 +261,17 @@ public class BaseCommand implements CommandExecutor {
                             sender.sendRichMessage(getMessage(
                                     "add-success",
                                     true,
-                                    new HashMap<>() {{put("amount", String.valueOf(amount));}}
+                                    new HashMap<>() {{
+                                        put("amount", String.valueOf(amount));
+                                    }}
                             ));
                         } catch (Exception e) {
                             sender.sendRichMessage(getMessage(
                                     "add-failed",
                                     true,
-                                    new HashMap<>() {{put("error", e.getMessage());}}
+                                    new HashMap<>() {{
+                                        put("error", e.getMessage());
+                                    }}
                             ));
                             e.printStackTrace();
                         }
@@ -248,7 +281,9 @@ public class BaseCommand implements CommandExecutor {
                             sender.sendRichMessage(getMessage(
                                     "remove-usage",
                                     true,
-                                    new HashMap<>() {{put("label", label);}}
+                                    new HashMap<>() {{
+                                        put("label", label);
+                                    }}
                             ));
                             return;
                         }
@@ -268,7 +303,9 @@ public class BaseCommand implements CommandExecutor {
                             sender.sendRichMessage(getMessage(
                                     "add-failed",
                                     true,
-                                    new HashMap<>() {{put("error", "File / Directory does not exist.");}}
+                                    new HashMap<>() {{
+                                        put("error", "File / Directory does not exist.");
+                                    }}
                             ));
                             return;
                         }
@@ -282,7 +319,9 @@ public class BaseCommand implements CommandExecutor {
                             sender.sendRichMessage(getMessage(
                                     "add-failed",
                                     true,
-                                    new HashMap<>() {{put("error", "File is a directory. To add directories, add a trailing slash to the file path.");}}
+                                    new HashMap<>() {{
+                                        put("error", "File is a directory. To add directories, add a trailing slash to the file path.");
+                                    }}
                             ));
                             return;
                         } else if (!isDirectory && file.endsWith("/")) {
@@ -290,7 +329,9 @@ public class BaseCommand implements CommandExecutor {
                             sender.sendRichMessage(getMessage(
                                     "add-failed",
                                     true,
-                                    new HashMap<>() {{put("error", "File is not a directory. To add files, remove the trailing slash from the file path.");}}
+                                    new HashMap<>() {{
+                                        put("error", "File is not a directory. To add files, remove the trailing slash from the file path.");
+                                    }}
                             ));
                             return;
                         }
@@ -300,13 +341,17 @@ public class BaseCommand implements CommandExecutor {
                             sender.sendRichMessage(getMessage(
                                     "remove-success",
                                     true,
-                                    new HashMap<>() {{put("amount", String.valueOf(amount));}}
+                                    new HashMap<>() {{
+                                        put("amount", String.valueOf(amount));
+                                    }}
                             ));
                         } catch (Exception e) {
                             sender.sendRichMessage(getMessage(
                                     "remove-failed",
                                     true,
-                                    new HashMap<>() {{put("error", e.getMessage());}}
+                                    new HashMap<>() {{
+                                        put("error", e.getMessage());
+                                    }}
                             ));
                             e.printStackTrace();
                         }
@@ -316,7 +361,9 @@ public class BaseCommand implements CommandExecutor {
                             sender.sendRichMessage(getMessage(
                                     "clone-usage",
                                     true,
-                                    new HashMap<>() {{put("label", label);}}
+                                    new HashMap<>() {{
+                                        put("label", label);
+                                    }}
                             ));
                             return;
                         }
@@ -330,7 +377,9 @@ public class BaseCommand implements CommandExecutor {
                             sender.sendRichMessage(getMessage(
                                     "clone-failed",
                                     true,
-                                    new HashMap<>() {{put("error", e.getMessage());}}
+                                    new HashMap<>() {{
+                                        put("error", e.getMessage());
+                                    }}
                             ));
                             e.printStackTrace();
                         }
@@ -340,7 +389,9 @@ public class BaseCommand implements CommandExecutor {
                             sender.sendRichMessage(getMessage(
                                     "status-usage",
                                     true,
-                                    new HashMap<>() {{put("label", label);}}
+                                    new HashMap<>() {{
+                                        put("label", label);
+                                    }}
                             ));
                             return;
                         }
@@ -355,7 +406,9 @@ public class BaseCommand implements CommandExecutor {
                             sender.sendRichMessage(getMessage(
                                     "reset-usage",
                                     true,
-                                    new HashMap<>() {{put("label", label);}}
+                                    new HashMap<>() {{
+                                        put("label", label);
+                                    }}
                             ));
                             return;
                         }
@@ -368,7 +421,9 @@ public class BaseCommand implements CommandExecutor {
                             sender.sendRichMessage(getMessage(
                                     "reset-failed",
                                     true,
-                                    new HashMap<>() {{put("error", e.getMessage());}}
+                                    new HashMap<>() {{
+                                        put("error", e.getMessage());
+                                    }}
                             ));
                             e.printStackTrace();
                         }
@@ -378,7 +433,9 @@ public class BaseCommand implements CommandExecutor {
                             sender.sendRichMessage(getMessage(
                                     "rollback-usage",
                                     true,
-                                    new HashMap<>() {{put("label", label);}}
+                                    new HashMap<>() {{
+                                        put("label", label);
+                                    }}
                             ));
                             return;
                         }
@@ -391,7 +448,9 @@ public class BaseCommand implements CommandExecutor {
                             sender.sendRichMessage(getMessage(
                                     "rollback-invalid-date",
                                     true,
-                                    new HashMap<>() {{put("label", label);}}
+                                    new HashMap<>() {{
+                                        put("label", label);
+                                    }}
                             ));
                             return;
                         }
@@ -401,7 +460,9 @@ public class BaseCommand implements CommandExecutor {
                             sender.sendRichMessage(getMessage(
                                     "rollback-future-date",
                                     true,
-                                    new HashMap<>() {{put("label", label);}}
+                                    new HashMap<>() {{
+                                        put("label", label);
+                                    }}
                             ));
                             return;
                         }
@@ -414,7 +475,9 @@ public class BaseCommand implements CommandExecutor {
                             sender.sendRichMessage(getMessage(
                                     "rollback-failed",
                                     true,
-                                    new HashMap<>() {{put("error", e.getMessage());}}
+                                    new HashMap<>() {{
+                                        put("error", e.getMessage());
+                                    }}
                             ));
                             e.printStackTrace();
                         }
@@ -424,7 +487,9 @@ public class BaseCommand implements CommandExecutor {
                             sender.sendRichMessage(getMessage(
                                     "revert-usage",
                                     true,
-                                    new HashMap<>() {{put("label", label);}}
+                                    new HashMap<>() {{
+                                        put("label", label);
+                                    }}
                             ));
                             return;
                         }
@@ -437,7 +502,9 @@ public class BaseCommand implements CommandExecutor {
                             sender.sendRichMessage(getMessage(
                                     "revert-failed",
                                     true,
-                                    new HashMap<>() {{put("error", e.getMessage());}}
+                                    new HashMap<>() {{
+                                        put("error", e.getMessage());
+                                    }}
                             ));
                             e.printStackTrace();
                         }
@@ -447,7 +514,9 @@ public class BaseCommand implements CommandExecutor {
                             sender.sendRichMessage(getMessage(
                                     "log-usage",
                                     true,
-                                    new HashMap<>() {{put("label", label);}}
+                                    new HashMap<>() {{
+                                        put("label", label);
+                                    }}
                             ));
                             return;
                         }
@@ -460,14 +529,18 @@ public class BaseCommand implements CommandExecutor {
                             sender.sendRichMessage(getMessage(
                                     "log-invalid-page-high",
                                     true,
-                                    new HashMap<>() {{put("maxPage", String.valueOf(maxPage));}}
+                                    new HashMap<>() {{
+                                        put("maxPage", String.valueOf(maxPage));
+                                    }}
                             ));
                             return;
                         } else if (page < 1) {
                             sender.sendRichMessage(getMessage(
                                     "log-invalid-page-low",
                                     true,
-                                    new HashMap<>() {{put("minPage", "1");}}
+                                    new HashMap<>() {{
+                                        put("minPage", "1");
+                                    }}
                             ));
                             return;
                         }
@@ -475,10 +548,8 @@ public class BaseCommand implements CommandExecutor {
                         sender.sendRichMessage(getMessage(
                                 "log-header",
                                 false,
-                                new HashMap<>() {{
-                                    put("page", String.valueOf(page));
-                                    put("maxPage", String.valueOf(maxPage));
-                                }}
+                                new HashMap<>() {{put("page", String.valueOf(page));
+                                    put("maxPage", String.valueOf(maxPage));}}
                         ));
                         for (int i = (page - 1) * 10; i < page * 10; i++) {
                             if (i >= lines.length) {
@@ -538,7 +609,9 @@ public class BaseCommand implements CommandExecutor {
                             sender.sendRichMessage(getMessage(
                                     "mute-usage",
                                     true,
-                                    new HashMap<>() {{put("label", label);}}
+                                    new HashMap<>() {{
+                                        put("label", label);
+                                    }}
                             ));
                             return;
                         }
@@ -559,7 +632,9 @@ public class BaseCommand implements CommandExecutor {
                             sender.sendRichMessage(getMessage(
                                     "mute-usage",
                                     true,
-                                    new HashMap<>() {{put("label", label);}}
+                                    new HashMap<>() {{
+                                        put("label", label);
+                                    }}
                             ));
                             return;
                         }
@@ -578,7 +653,9 @@ public class BaseCommand implements CommandExecutor {
                             sender.sendRichMessage(getMessage(
                                     "script-usage",
                                     true,
-                                    new HashMap<>() {{put("label", label);}}
+                                    new HashMap<>() {{
+                                        put("label", label);
+                                    }}
                             ));
                             return;
                         }
@@ -597,7 +674,9 @@ public class BaseCommand implements CommandExecutor {
                             sender.sendRichMessage(getMessage(
                                     "script-failed",
                                     true,
-                                    new HashMap<>() {{put("error", e.getMessage());}}
+                                    new HashMap<>() {{
+                                        put("error", e.getMessage());
+                                    }}
                             ));
                             e.printStackTrace();
                         }
@@ -607,7 +686,9 @@ public class BaseCommand implements CommandExecutor {
                             sender.sendRichMessage(getMessage(
                                     "debug-usage",
                                     true,
-                                    new HashMap<>() {{put("label", label);}}
+                                    new HashMap<>() {{
+                                        put("label", label);
+                                    }}
                             ));
                             return;
                         }
@@ -616,7 +697,7 @@ public class BaseCommand implements CommandExecutor {
                         // date and version
                         builder.append("Date: ").append(new Date()).append("\n");
                         builder.append("Version: ").append(plugin.getDescription().getVersion()).append("\n");
-                        
+
                         // config
                         builder.append("Config: ").append("\n");
                         // read from plugin/config.yml
@@ -628,7 +709,7 @@ public class BaseCommand implements CommandExecutor {
                         } catch (Exception e) {
                             builder.append("Failed to read config.yml: ").append(e.getMessage()).append("\n");
                         }
-                        
+
                         // messages.yml
                         builder.append("Messages: ").append("\n");
                         // read from plugin/messages.yml
@@ -686,33 +767,122 @@ public class BaseCommand implements CommandExecutor {
                             sender.sendRichMessage(getMessage(
                                     "debug-success",
                                     true,
-                                    new HashMap<>() {{put("url", responseJson.getString("url"));}
-                            }));
+                                    new HashMap<>() {
+                                        {
+                                            put("url", responseJson.getString("url"));
+                                        }
+                                    }));
                         } else {
                             sender.sendRichMessage(getMessage(
                                     "debug-failed",
                                     true,
-                                    new HashMap<>() {{put("error", responseJson.getString("error"));}
-                            }));
+                                    new HashMap<>() {
+                                        {
+                                            put("error", responseJson.getString("error"));
+                                        }
+                                    }));
                         }
                     }
                     default -> {
                         if (!subCommand.equals("help")) {
-                            sender.sendRichMessage("Invalid subcommand. Valid commands:");
+                            sender.sendRichMessage(getMessage(
+                                    "invalid-command",
+                                    true,
+                                    new HashMap<>() {{
+                                        put("label", label);
+                                    }}
+                            ));
                         }
-                        sender.sendRichMessage("/" + label + " clone - Clones the repo from the remote");
-                        sender.sendRichMessage("/" + label + " pull - Pulls the repo from the remote");
-                        sender.sendRichMessage("/" + label + " push <commit message> - Pushes the repo to the remote");
-                        sender.sendRichMessage("/" + label + " add <file> <message> - Adds a file to the repo");
-                        sender.sendRichMessage("/" + label + " remove <file> <message> - Removes a file from the repo");
-                        sender.sendRichMessage("/" + label + " reset <commit hash / link> - Resets the current branch to a specific commit");
-                        sender.sendRichMessage("/" + label + " revert <commit hash / link> - Reverts a specific commit");
-                        sender.sendRichMessage("/" + label + " script <script name> - Runs a script from MineCICD/scripts/<script>.txt");
-                        sender.sendRichMessage("/" + label + " log <page> - Lists the commits in the repo");
-                        sender.sendRichMessage("/" + label + " status - Gets the status of the repo");
-                        sender.sendRichMessage("/" + label + " mute <true / false> - Mutes MineCICD messages");
-                        sender.sendRichMessage("/" + label + " reload - Reloads the config");
-                        sender.sendRichMessage("/" + label + " debug - Dumps debug info to a paste site");
+                        
+                        sender.sendRichMessage(getMessage(
+                                "help-clone",
+                                true,
+                                new HashMap<>() {{put("label", label);}}
+                        ));
+                        
+                        sender.sendRichMessage(getMessage(
+                                "help-pull",
+                                true,
+                                new HashMap<>() {{put("label", label);}}
+                        ));
+                        
+                        sender.sendRichMessage(getMessage(
+                                "help-push",
+                                true,
+                                new HashMap<>() {{put("label", label);}}
+                        ));
+                        
+                        sender.sendRichMessage(getMessage(
+                                "help-add",
+                                true,
+                                new HashMap<>() {{put("label", label);}}
+                        ));
+                        
+                        sender.sendRichMessage(getMessage(
+                                "help-remove",
+                                true,
+                                new HashMap<>() {{put("label", label);}}
+                        ));
+                        
+                        sender.sendRichMessage(getMessage(
+                                "help-reset",
+                                true,
+                                new HashMap<>() {{put("label", label);}}
+                        ));
+
+                        sender.sendRichMessage(getMessage(
+                                "help-rollback",
+                                true,
+                                new HashMap<>() {{put("label", label);}}
+                        ));
+
+                        sender.sendRichMessage(getMessage(
+                                "help-revert",
+                                true,
+                                new HashMap<>() {{put("label", label);}}
+                        ));
+
+                        sender.sendRichMessage(getMessage(
+                                "help-script",
+                                true,
+                                new HashMap<>() {{put("label", label);}}
+                        ));
+
+                        sender.sendRichMessage(getMessage(
+                                "help-log",
+                                true,
+                                new HashMap<>() {{put("label", label);}}
+                        ));
+
+                        sender.sendRichMessage(getMessage(
+                                "help-status",
+                                true,
+                                new HashMap<>() {{put("label", label);}}
+                        ));
+
+                        sender.sendRichMessage(getMessage(
+                                "help-mute",
+                                true,
+                                new HashMap<>() {{put("label", label);}}
+                        ));
+
+                        sender.sendRichMessage(getMessage(
+                                "help-debug",
+                                true,
+                                new HashMap<>() {{put("label", label);}}
+                        ));
+
+                        sender.sendRichMessage(getMessage(
+                                "help-reload",
+                                true,
+                                new HashMap<>() {{put("label", label);}}
+                        ));
+
+                        sender.sendRichMessage(getMessage(
+                                "help-help",
+                                true,
+                                new HashMap<>() {{put("label", label);}}
+                        ));
                     }
                 }
             } catch (Exception e) {

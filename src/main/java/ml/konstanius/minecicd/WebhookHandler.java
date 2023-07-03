@@ -49,9 +49,9 @@ public class WebhookHandler implements HttpHandler {
 
         String pusher = json.getJSONObject("pusher").getString("name");
         String message = json.getJSONObject("head_commit").getString("message");
-        String head = json.getJSONObject("head_commit").getString("id");
+        String after = json.getString("after");
         // check if head is different from last commit
-        if (head.equals(MineCICD.getCurrentCommit())) {
+        if (after.equals(MineCICD.getCurrentCommit())) {
             return;
         }
 
@@ -115,16 +115,16 @@ public class WebhookHandler implements HttpHandler {
 
                 String mainAction;
                 if (restart) {
-                    mainAction = "Server Restart";
+                    mainAction = Messages.getMessage("main-action-restart", false);
                 } else if (globalReload) {
-                    mainAction = "Global Reload";
+                    mainAction = Messages.getMessage("main-action-reload", false);
                 } else if (!individualReload.isEmpty()) {
-                    mainAction = "Plugin Reload";
+                    mainAction = Messages.getMessage("main-action-plugin-reload", false);
                 } else {
-                    mainAction = "No Action";
+                    mainAction = Messages.getMessage("main-action-no-action", false);
                 }
                 String commit = json.getJSONObject("head_commit").getString("id");
-                Messages.presentWebhookCommit(pusher, message, mainAction, commit, commands);
+                Messages.presentWebhookCommit(pusher, message, mainAction, commit, commands, scripts);
 
                 // run the commands with all permissions
                 for (String cmd : commands) {

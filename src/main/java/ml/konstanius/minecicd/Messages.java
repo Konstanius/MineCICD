@@ -8,9 +8,14 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 import java.util.logging.Level;
 
 import static ml.konstanius.minecicd.MineCICD.muteList;
@@ -19,31 +24,58 @@ public abstract class Messages {
     public static HashMap<String, String> messages = new HashMap<>();
 
     public static void sendManagementMessage(CommandSender sender) {
-        // includes:
-        // - restart server (yellow, propose)
-        // - run reload (red, propose)
-        // - list plugins to reload (green, run)
-
-        String restart = "<yellow><u><bold><click:suggest_command:/restart>[Restart Server]</click></bold></u></yellow> ";
-        String reload = "<red><u><bold><click:suggest_command:/reload confirm>[Reload Server]</click></bold></u></red> ";
-        String list = "<green><u><bold><click:suggest_command:/pl>[List Plugins]</click></bold></u></green>";
-
-        sender.sendRichMessage(restart + reload + list);
+        sender.sendRichMessage(Messages.getMessage("management-message", false));
     }
 
-    public static void presentWebhookCommit(String pusher, String message, String mainAction, String commit, ArrayList<String> commands) {
-        String header = "<gold><bold>========== MineCICD Webhook Push ==========</bold></gold>";
-        String footer = "<gold><bold>============================================</bold></gold>";
+    public static void presentWebhookCommit(String author, String message, String mainAction, String commit, ArrayList<String> commands, ArrayList<String> scripts) {
+        String header = Messages.getMessage("webhook-header", false);
+        String footer = Messages.getMessage("webhook-footer", false);
 
-        String pusherMessage = "<gray><italic>Pusher: </italic></gray><white>" + pusher + "</white>";
-        String messageMessage = "<gray><italic>Message: </italic></gray><white>" + message + "</white>";
-        String commitMessage = "<gray><italic>Commit: </italic></gray><white>" + commit + "</white>";
-        String actionMessage = "<gray><italic>Action: </italic></gray><white>" + mainAction + "</white>";
+        String authorMessage = Messages.getMessage(
+                "webhook-author",
+                false,
+                new HashMap<>() {{put("author", author);}}
+        );
+        String commitMessage = Messages.getMessage(
+                "webhook-commit",
+                false,
+                new HashMap<>() {{put("commit", commit);}}
+        );
+        String messageMessage = Messages.getMessage(
+                "webhook-message",
+                false,
+                new HashMap<>() {{put("message", message);}}
+        );
+        String mainActionMessage = Messages.getMessage(
+                "webhook-main-action",
+                false,
+                new HashMap<>() {{put("main-action", mainAction);}}
+        );
 
         ArrayList<String> commandMessages = new ArrayList<>();
         for (int i = 0; i < commands.size(); i++) {
             String command = commands.get(i);
-            commandMessages.add("<gray><italic>Command (" + (i + 1) + "): </italic></gray><white>" + command + "</white>");
+            int finalI = i;
+            String commandMessage = Messages.getMessage(
+                    "webhook-command",
+                    false,
+                    new HashMap<>() {{put("command", command); put("index", String.valueOf(finalI + 1));}}
+            );
+
+            commandMessages.add(commandMessage);
+        }
+
+        ArrayList<String> scriptMessages = new ArrayList<>();
+        for (int i = 0; i < scripts.size(); i++) {
+            String script = scripts.get(i);
+            int finalI = i;
+            String scriptMessage = Messages.getMessage(
+                    "webhook-script",
+                    false,
+                    new HashMap<>() {{put("script", script); put("index", String.valueOf(finalI + 1));}}
+            );
+
+            scriptMessages.add(scriptMessage);
         }
 
 
@@ -51,12 +83,15 @@ public abstract class Messages {
             if (p.hasPermission("minecicd.notify") && !muteList.contains(p.getUniqueId().toString())) {
                 try {
                     p.sendRichMessage(header);
-                    p.sendRichMessage(pusherMessage);
-                    p.sendRichMessage(messageMessage);
+                    p.sendRichMessage(authorMessage);
                     p.sendRichMessage(commitMessage);
-                    p.sendRichMessage(actionMessage);
+                    p.sendRichMessage(mainActionMessage);
+                    p.sendRichMessage(messageMessage);
                     for (String commandMessage : commandMessages) {
                         p.sendRichMessage(commandMessage);
+                    }
+                    for (String scriptMessage : scriptMessages) {
+                        p.sendRichMessage(scriptMessage);
                     }
                     p.sendRichMessage(footer);
 
