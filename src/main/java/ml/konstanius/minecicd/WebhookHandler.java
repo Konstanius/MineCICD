@@ -126,10 +126,10 @@ public class WebhookHandler implements HttpHandler {
                 String commit = json.getJSONObject("head_commit").getString("id");
                 Messages.presentWebhookCommit(pusher, message, mainAction, commit, commands, scripts);
 
-                // run the commands with all permissions
+                // run the commands
                 for (String cmd : commands) {
                     try {
-                        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "sudo " + cmd);
+                        Bukkit.getScheduler().runTask(MineCICD.plugin, () -> Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd));
                     } catch (Exception e) {
                         e.printStackTrace();
                     }

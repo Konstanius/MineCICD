@@ -13,7 +13,7 @@ pull-no-changes: "&aNo changes to pull."
 
 push-usage: "&cInvalid arguments. Usage: /{label} push <commit message>"
 push-failed: "&cError pushing repo: {error}"
-push-success: "&Repo pushed successfully."
+push-success: "&Repo pushed successfully, {changes} file(s) changed."
 
 reload-usage: "&cInvalid arguments. Usage: /{label} reload"
 reload-failed: "&cError checking out branch: {error}\n{prefix}&cYou might still be able to continue using the plugin."
@@ -100,7 +100,7 @@ help-reload: "&a/{label} reload &7- &bReloads the plugin configuration and webho
 help-help: "&a/{label} help &7- &bShows this help message."
 
 webhook-header: "&7===== &aMine&bCI&dCD &aWebHook Push &7====="
-webhook-author: "&7Author: &a{pusher}"
+webhook-author: "&7Author: &a{author}"
 webhook-commit: "&7Commit: &a{commit}"
 webhook-main-action: "&7Action: &a{action}"
 webhook-message: "&7Message: &a{message}"

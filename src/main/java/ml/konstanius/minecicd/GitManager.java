@@ -6,8 +6,12 @@ import org.eclipse.jgit.api.PullResult;
 import org.eclipse.jgit.api.ResetCommand;
 import org.eclipse.jgit.api.RmCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.diff.DiffEntry;
+import org.eclipse.jgit.diff.DiffFormatter;
+import org.eclipse.jgit.diff.RawTextComparator;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
+import org.eclipse.jgit.util.io.DisabledOutputStream;
 
 import java.io.File;
 import java.io.IOException;
@@ -149,7 +153,7 @@ public abstract class GitManager {
      * @throws IOException     if repo folder does not exist
      * @throws GitAPIException if git push fails
      */
-    public static void pushRepo(String message, String player) throws IOException, GitAPIException {
+    public static int pushRepo(String message, String player) throws IOException, GitAPIException {
         boolean ownsBusy = !busy;
         busy = true;
         try {
@@ -164,17 +168,41 @@ public abstract class GitManager {
 
             FilesManager.gitSanitizer();
 
+            int filesChanged = 0;
+
+//            try (Git git = Git.open(new File(plugin.getDataFolder().getAbsolutePath() + "/repo"))) {
+//                git.add().addFilepattern(".").call();
+//                git.commit().setMessage(message + "\nUser: " + player).call();
+//                git.push().setCredentialsProvider(new UsernamePasswordCredentialsProvider(token, "")).call();
+//                String newCommit = git.log().call().iterator().next().getName();
+//                MineCICD.setCurrentCommit(newCommit);
+//            }
+
+            // now with tracking of files changed
             try (Git git = Git.open(new File(plugin.getDataFolder().getAbsolutePath() + "/repo"))) {
                 git.add().addFilepattern(".").call();
                 git.commit().setMessage(message + "\nUser: " + player).call();
-                git.push().setCredentialsProvider(new UsernamePasswordCredentialsProvider(token, "")).call();
-                String newCommit = git.log().call().iterator().next().getName();
-                MineCICD.setCurrentCommit(newCommit);
+                Iterable<RevCommit> commits = git.log().call();
+                List<RevCommit> commitsList = new ArrayList<>();
+                commits.forEach(commitsList::add);
+                RevCommit newCommit = commitsList.get(0);
+                MineCICD.setCurrentCommit(newCommit.getName());
+                RevCommit oldCommit = commitsList.get(1);
+                DiffFormatter df = new DiffFormatter(DisabledOutputStream.INSTANCE);
+                df.setRepository(git.getRepository());
+                df.setDiffComparator(RawTextComparator.DEFAULT);
+                df.setDetectRenames(true);
+                List<DiffEntry> diffs = df.scan(oldCommit.getTree(), newCommit.getTree());
+                for (DiffEntry diff : diffs) {
+                    filesChanged++;
+                }
             }
 
             FilesManager.generatePreviousFiles();
 
             generateTabCompleter();
+
+            return filesChanged;
         } finally {
             if (ownsBusy) {
                 busy = false;

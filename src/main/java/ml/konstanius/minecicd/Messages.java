@@ -49,7 +49,7 @@ public abstract class Messages {
         String mainActionMessage = Messages.getMessage(
                 "webhook-main-action",
                 false,
-                new HashMap<>() {{put("main-action", mainAction);}}
+                new HashMap<>() {{put("action", mainAction);}}
         );
 
         ArrayList<String> commandMessages = new ArrayList<>();

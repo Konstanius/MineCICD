@@ -59,7 +59,27 @@ public abstract class Script {
                                 break;
                             }
                         } else {
-                            ref.result = Bukkit.dispatchCommand(Bukkit.getConsoleSender(), line) ? 0 : 1;
+                            // run on main thread to avoid concurrency issues
+//                            ref.result = Bukkit.dispatchCommand(Bukkit.getConsoleSender(), line) ? 0 : 1;
+                            int finalI1 = i;
+                            Bukkit.getScheduler().runTask(plugin, () -> {
+                                try {
+                                    Bukkit.dispatchCommand(Bukkit.getConsoleSender(), line);
+                                    ref.result = 0;
+                                } catch (Exception e) {
+                                    int finalI = finalI1;
+                                    ref.output = getMessage(
+                                            "script-error",
+                                            true,
+                                            new HashMap<>() {{
+                                                put("line", String.valueOf(finalI + 1));
+                                                put("command", line);
+                                                put("error", e.getMessage());
+                                            }}
+                                    );
+                                    ref.result = 1;
+                                }
+                            }).getOwner();
                         }
 
                         if (ref.result != 0) {

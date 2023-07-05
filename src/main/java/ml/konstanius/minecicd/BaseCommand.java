@@ -107,10 +107,7 @@ public class BaseCommand implements CommandExecutor {
                                 FilesManager.mergeToLocal();
                                 sender.sendRichMessage(getMessage(
                                         "pull-success",
-                                        true,
-                                        new HashMap<>() {{
-                                            put("label", label);
-                                        }}
+                                        true
                                 ));
                                 sendManagementMessage(sender);
                             } else {
@@ -148,12 +145,12 @@ public class BaseCommand implements CommandExecutor {
 
                             FilesManager.mergeToGit();
                             String commitMessage = String.join(" ", Arrays.copyOfRange(args, 1, args.length));
-                            GitManager.pushRepo(commitMessage, sender.getName());
+                            int changes = GitManager.pushRepo(commitMessage, sender.getName());
                             sender.sendRichMessage(getMessage(
                                     "push-success",
                                     true,
                                     new HashMap<>() {{
-                                        put("label", label);
+                                        put("changes", String.valueOf(changes));
                                     }}
                             ));
                         } catch (Exception e) {
