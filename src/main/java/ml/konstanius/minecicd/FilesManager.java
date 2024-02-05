@@ -129,11 +129,6 @@ public abstract class FilesManager {
                         return FileVisitResult.CONTINUE;
                     }
 
-                    // skip any /MineCICD(...).jar
-                    if (file.toString().contains("/MineCICD") && file.toString().endsWith(".jar")) {
-                        return FileVisitResult.CONTINUE;
-                    }
-
                     try {
                         String relativePath = file.toString().replace(path.toString(), "");
                         if (relativePath.startsWith("/")) {
