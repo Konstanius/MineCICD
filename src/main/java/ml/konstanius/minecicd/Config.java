@@ -1,7 +1,5 @@
 package ml.konstanius.minecicd;
 
-import org.jetbrains.annotations.NotNull;
-
 import java.util.ArrayList;
 
 public abstract class Config {
@@ -17,12 +15,13 @@ public abstract class Config {
         return MineCICD.config.getBoolean(path);
     }
 
-    public static @NotNull ArrayList<String> getStringList(String path) {
+    public static ArrayList<String> getStringList(String path) {
         return (ArrayList<String>) MineCICD.config.getStringList(path);
     }
 
     public static void set(String path, Object value) {
         MineCICD.config.set(path, value);
+        save();
     }
 
     public static void save() {
@@ -33,16 +32,5 @@ public abstract class Config {
     public static void reload() {
         MineCICD.plugin.reloadConfig();
         MineCICD.config = MineCICD.plugin.getConfig();
-
-        Messages.loadMessages();
-    }
-
-    public static void addToList(String path, String value) {
-        ArrayList<String> whitelist = getStringList(path);
-        if (!whitelist.contains(value)) {
-            whitelist.add(value);
-            set(path, whitelist);
-            save();
-        }
     }
 }

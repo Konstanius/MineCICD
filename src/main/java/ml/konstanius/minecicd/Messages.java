@@ -1,12 +1,12 @@
 package ml.konstanius.minecicd;
 
-import org.bukkit.Bukkit;
-import org.bukkit.Sound;
-import org.bukkit.command.CommandSender;
+import net.md_5.bungee.api.ChatColor;
+import net.md_5.bungee.api.chat.BaseComponent;
+import net.md_5.bungee.api.chat.ComponentBuilder;
+import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.entity.Player;
 
 import java.io.File;
 import java.io.IOException;
@@ -18,91 +18,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.logging.Level;
 
-import static ml.konstanius.minecicd.MineCICD.muteList;
-
 public abstract class Messages {
     public static HashMap<String, String> messages = new HashMap<>();
-
-    public static void sendManagementMessage(CommandSender sender) {
-        sender.sendRichMessage(Messages.getMessage("management-message", false));
-    }
-
-    public static void presentWebhookCommit(String author, String message, String mainAction, String commit, ArrayList<String> commands, ArrayList<String> scripts) {
-        String header = Messages.getMessage("webhook-header", false);
-        String footer = Messages.getMessage("webhook-footer", false);
-
-        String authorMessage = Messages.getMessage(
-                "webhook-author",
-                false,
-                new HashMap<>() {{put("author", author);}}
-        );
-        String commitMessage = Messages.getMessage(
-                "webhook-commit",
-                false,
-                new HashMap<>() {{put("commit", commit);}}
-        );
-        String messageMessage = Messages.getMessage(
-                "webhook-message",
-                false,
-                new HashMap<>() {{put("message", message);}}
-        );
-        String mainActionMessage = Messages.getMessage(
-                "webhook-main-action",
-                false,
-                new HashMap<>() {{put("action", mainAction);}}
-        );
-
-        ArrayList<String> commandMessages = new ArrayList<>();
-        for (int i = 0; i < commands.size(); i++) {
-            String command = commands.get(i);
-            int finalI = i;
-            String commandMessage = Messages.getMessage(
-                    "webhook-command",
-                    false,
-                    new HashMap<>() {{put("command", command); put("index", String.valueOf(finalI + 1));}}
-            );
-
-            commandMessages.add(commandMessage);
-        }
-
-        ArrayList<String> scriptMessages = new ArrayList<>();
-        for (int i = 0; i < scripts.size(); i++) {
-            String script = scripts.get(i);
-            int finalI = i;
-            String scriptMessage = Messages.getMessage(
-                    "webhook-script",
-                    false,
-                    new HashMap<>() {{put("script", script); put("index", String.valueOf(finalI + 1));}}
-            );
-
-            scriptMessages.add(scriptMessage);
-        }
-
-
-        for (Player p : Bukkit.getOnlinePlayers()) {
-            if (p.hasPermission("minecicd.notify") && !muteList.contains(p.getUniqueId().toString())) {
-                try {
-                    p.sendRichMessage(header);
-                    p.sendRichMessage(authorMessage);
-                    p.sendRichMessage(commitMessage);
-                    p.sendRichMessage(mainActionMessage);
-                    p.sendRichMessage(messageMessage);
-                    for (String commandMessage : commandMessages) {
-                        p.sendRichMessage(commandMessage);
-                    }
-                    for (String scriptMessage : scriptMessages) {
-                        p.sendRichMessage(scriptMessage);
-                    }
-                    p.sendRichMessage(footer);
-
-                    p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1f, 2f);
-                    Bukkit.getScheduler().runTaskLater(MineCICD.plugin, () -> p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1f, 2f), 5L);
-                    Bukkit.getScheduler().runTaskLater(MineCICD.plugin, () -> p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1f, 2f), 10L);
-                } catch (Exception ignored) {
-                }
-            }
-        }
-    }
 
     public static String getMessage(String message, boolean prefixed) {
         String msg = messages.getOrDefault(message, message);
@@ -126,12 +43,160 @@ public abstract class Messages {
         return msg;
     }
 
+    public static String getCleanMessage(String message, boolean prefixed) {
+        String msg = getMessage(message, prefixed);
+        msg = msg.replaceAll("(&[0-9a-fk-or])", "");
+        return msg;
+    }
+
+    public static String getCleanMessage(String message,boolean prefixed,  Map<String, String> variables) {
+        String msg = getMessage(message, prefixed, variables);
+        msg = msg.replaceAll("(&[0-9a-fk-or])", "");
+        return msg;
+    }
+
+    public static BaseComponent[] getRichMessage(String message, boolean prefixed) {
+        String fullMsg = getMessage(message, prefixed);
+        return messageToComponent(fullMsg);
+    }
+
+    public static BaseComponent[] getRichMessage(String message, boolean prefixed, Map<String, String> variables) {
+        String fullMsg = getMessage(message, prefixed, variables);
+        return messageToComponent(fullMsg);
+    }
+
+    public static BaseComponent[] messageToComponent(String message) {
+        ComponentBuilder builder = new ComponentBuilder("");
+
+        StringBuilder current = new StringBuilder();
+        ChatColor currentColor = ChatColor.WHITE;
+        ArrayList<ChatColor> formatStack = new ArrayList<>();
+        boolean escape = false;
+        for (int i = 0; i < message.length(); i++) {
+            // if it is an &
+            if (message.charAt(i) == '&' && escape) {
+                current.append("&");
+                escape = false;
+                continue;
+            }
+
+            // if it is a backslash escape character
+            if (message.charAt(i) == '\\') {
+                if (escape) {
+                    current.append("\\");
+                    escape = false;
+                } else {
+                    escape = true;
+                }
+                continue;
+            }
+
+            // if it is a color code
+            if (message.charAt(i) == '&') {
+                if (i < message.length() - 1) {
+                    ChatColor color = colorReplacers.get("&" + message.charAt(i + 1));
+                    if (color != null) {
+                        if (current.length() > 0) {
+                            String currentString = current.toString();
+                            TextComponent textComponent = new TextComponent(currentString);
+                            textComponent.setColor(currentColor);
+                            for (ChatColor format : formatStack) {
+                                textComponent.setObfuscated(format == ChatColor.MAGIC);
+                                textComponent.setBold(format == ChatColor.BOLD);
+                                textComponent.setStrikethrough(format == ChatColor.STRIKETHROUGH);
+                                textComponent.setUnderlined(format == ChatColor.UNDERLINE);
+                                textComponent.setItalic(format == ChatColor.ITALIC);
+                            }
+                            builder.append(textComponent);
+                            current = new StringBuilder();
+                        }
+                        currentColor = color;
+                        i++;
+                        continue;
+                    }
+
+                    ChatColor format = formatReplacers.get("&" + message.charAt(i + 1));
+                    if (format != null) {
+                        if (current.length() > 0) {
+                            String currentString = current.toString();
+                            TextComponent textComponent = new TextComponent(currentString);
+                            textComponent.setColor(currentColor);
+                            for (ChatColor f : formatStack) {
+                                textComponent.setObfuscated(f == ChatColor.MAGIC);
+                                textComponent.setBold(f == ChatColor.BOLD);
+                                textComponent.setStrikethrough(f == ChatColor.STRIKETHROUGH);
+                                textComponent.setUnderlined(f == ChatColor.UNDERLINE);
+                                textComponent.setItalic(f == ChatColor.ITALIC);
+                            }
+                            builder.append(textComponent);
+                            current = new StringBuilder();
+                        }
+                        formatStack.add(format);
+                        i++;
+                        continue;
+                    }
+
+                    if (message.charAt(i + 1) == 'r') {
+                        if (current.length() > 0) {
+                            String currentString = current.toString();
+                            TextComponent textComponent = new TextComponent(currentString);
+                            textComponent.setColor(currentColor);
+                            for (ChatColor f : formatStack) {
+                                textComponent.setObfuscated(f == ChatColor.MAGIC);
+                                textComponent.setBold(f == ChatColor.BOLD);
+                                textComponent.setStrikethrough(f == ChatColor.STRIKETHROUGH);
+                                textComponent.setUnderlined(f == ChatColor.UNDERLINE);
+                                textComponent.setItalic(f == ChatColor.ITALIC);
+                            }
+                            builder.append(textComponent);
+                            current = new StringBuilder();
+                        }
+                        currentColor = ChatColor.WHITE;
+                        formatStack.clear();
+                        i++;
+
+                        TextComponent textComponent = new TextComponent("");
+                        textComponent.setColor(currentColor);
+                        textComponent.setObfuscated(false);
+                        textComponent.setBold(false);
+                        textComponent.setStrikethrough(false);
+                        textComponent.setUnderlined(false);
+                        textComponent.setItalic(false);
+                        builder.append(textComponent);
+                        continue;
+                    }
+                }
+
+                current.append(message.charAt(i));
+                continue;
+            }
+            current.append(message.charAt(i));
+            escape = false;
+        }
+
+        if (current.length() > 0) {
+            String currentString = current.toString();
+            TextComponent textComponent = new TextComponent(currentString);
+            textComponent.setColor(currentColor);
+            for (ChatColor format : formatStack) {
+                textComponent.setObfuscated(format == ChatColor.MAGIC);
+                textComponent.setBold(format == ChatColor.BOLD);
+                textComponent.setStrikethrough(format == ChatColor.STRIKETHROUGH);
+                textComponent.setUnderlined(format == ChatColor.UNDERLINE);
+                textComponent.setItalic(format == ChatColor.ITALIC);
+            }
+            builder.append(textComponent);
+        }
+
+        return builder.create();
+    }
+
     public static void loadMessages() {
         try {
             YamlConfiguration config = new YamlConfiguration();
             config.load(new InputStreamReader(Objects.requireNonNull(MineCICD.plugin.getResource("messages.yml")), StandardCharsets.UTF_8));
 
-            File messagesFile = new File(MineCICD.plugin.getDataFolder().getAbsolutePath() + "/messages.yml");
+            File messagesFile = new File(MineCICD.plugin.getDataFolder().getAbsolutePath(), "messages.yml");
             if (!messagesFile.exists()) {
                 MineCICD.plugin.saveResource("messages.yml", false);
             }
@@ -140,54 +205,61 @@ public abstract class Messages {
             messagesConfig.load(messagesFile);
 
             for (String key : messagesConfig.getKeys(false)) {
-                String value = messagesConfig.getString(key);
-                messages.put(key, translateCodes(value));
+                Object value = messagesConfig.get(key);
+                if (value instanceof String) {
+                    messages.put(key, (String) value);
+                } else if (value instanceof ArrayList) {
+                    ArrayList<String> list = (ArrayList<String>) value;
+                    StringBuilder builder = new StringBuilder();
+                    for (int i = 0; i < list.size(); i++) {
+                        builder.append(list.get(i));
+                        if (i < list.size() - 1) {
+                            builder.append("\n");
+                        }
+                    }
+                    messages.put(key, builder.toString());
+                } else {
+                    MineCICD.log("Invalid message format at key: " + key, Level.WARNING);
+                }
             }
 
             // check if any keys are missing
             for (String key : config.getKeys(false)) {
                 if (!messages.containsKey(key)) {
                     MineCICD.log("Missing message key: " + key, Level.WARNING);
-                    // add it to the end of the file
-                    messages.put(key, translateCodes(config.getString(key)));
                 }
             }
         } catch (IOException | InvalidConfigurationException e) {
-            e.printStackTrace();
+            MineCICD.log("Failed to load messages", Level.SEVERE);
+            MineCICD.logError(e);
         }
     }
 
-    // replace &0 - &9, &a - &f, &k, &l, &m, &n, &o, &r with miniMessage <type>
-    public static HashMap<String, String> replacers = new HashMap<>() {{
-        put("&0", "<black>");
-        put("&1", "<dark_blue>");
-        put("&2", "<dark_green>");
-        put("&3", "<dark_aqua>");
-        put("&4", "<dark_red>");
-        put("&5", "<dark_purple>");
-        put("&6", "<gold>");
-        put("&7", "<gray>");
-        put("&8", "<dark_gray>");
-        put("&9", "<blue>");
-        put("&a", "<green>");
-        put("&b", "<aqua>");
-        put("&c", "<red>");
-        put("&d", "<light_purple>");
-        put("&e", "<yellow>");
-        put("&f", "<white>");
-        put("&k", "<obfuscated>");
-        put("&l", "<bold>");
-        put("&m", "<strikethrough>");
-        put("&n", "<underlined>");
-        put("&o", "<italic>");
-        put("&r", "<reset>");
+    // replace &0 - &9, &a - &f, &k, &l, &m, &n, &o, &r with ChatComponent
+    public static HashMap<String, ChatColor> colorReplacers = new HashMap<String, ChatColor>() {{
+        put("&0", ChatColor.BLACK);
+        put("&1", ChatColor.DARK_BLUE);
+        put("&2", ChatColor.DARK_GREEN);
+        put("&3", ChatColor.DARK_AQUA);
+        put("&4", ChatColor.DARK_RED);
+        put("&5", ChatColor.DARK_PURPLE);
+        put("&6", ChatColor.GOLD);
+        put("&7", ChatColor.GRAY);
+        put("&8", ChatColor.DARK_GRAY);
+        put("&9", ChatColor.BLUE);
+        put("&a", ChatColor.GREEN);
+        put("&b", ChatColor.AQUA);
+        put("&c", ChatColor.RED);
+        put("&d", ChatColor.LIGHT_PURPLE);
+        put("&e", ChatColor.YELLOW);
+        put("&f", ChatColor.WHITE);
     }};
 
-    private static String translateCodes(String value) {
-        for (String key : replacers.keySet()) {
-            value = value.replace(key, replacers.get(key));
-        }
-
-        return value;
-    }
+    public static HashMap<String, ChatColor> formatReplacers = new HashMap<String, ChatColor>() {{
+        put("&k", ChatColor.MAGIC);
+        put("&l", ChatColor.BOLD);
+        put("&m", ChatColor.STRIKETHROUGH);
+        put("&n", ChatColor.UNDERLINE);
+        put("&o", ChatColor.ITALIC);
+    }};
 }

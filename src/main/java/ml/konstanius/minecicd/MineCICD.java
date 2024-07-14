@@ -1,6 +1,7 @@
 package ml.konstanius.minecicd;
 
 import com.sun.net.httpserver.HttpServer;
+import org.apache.commons.io.FileUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.boss.BarColor;
 import org.bukkit.boss.BarStyle;
@@ -9,115 +10,114 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.eclipse.jgit.api.errors.GitAPIException;
+import org.bukkit.scheduler.BukkitTask;
+import org.eclipse.jgit.api.Git;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.InetSocketAddress;
 import java.net.URL;
-import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public final class MineCICD extends JavaPlugin {
     public static FileConfiguration config;
-    public static Logger logger = Bukkit.getLogger();
-    public static HttpServer webServer;
-    public static boolean busy = false;
+    public static Logger logger = Logger.getLogger("MineCICD");
     public static Plugin plugin;
-    public static HashSet<String> muteList = new HashSet<>();
-    public static int logSize = 0; // Caches the amount of commits
-    public static String[] commitLog = new String[0]; // Caches the commit revision hashes
-    public static HashSet<String> repoFiles = new HashSet<>(); // Caches the files and paths in the repo
-    public static HashSet<String> localFiles = new HashSet<>(); // Caches the files and paths in the local directory
-    public static HashSet<String> scripts = new HashSet<>(); // Caches the scripts in the scripts directory
-    public static BossBar bossBar = Bukkit.createBossBar("MineCICD", BarColor.BLUE, BarStyle.SOLID);
+    public static HttpServer webServer;
+    public static HashMap<String, BossBar> busyBars = new HashMap<>();
+    public static boolean busyLock = false;
 
     @Override
     public void onEnable() {
+        plugin = this;
         saveDefaultConfig();
         config = getConfig();
-        plugin = this;
 
-        startWebServer();
+        if (config.get("repository-url") != null) {
+            File configFile = new File(getDataFolder(), "config.yml");
+            configFile.renameTo(new File(getDataFolder(), "config_old.yml"));
 
-        // TODO register events in the future
+            File messagesFile = new File(getDataFolder(), "messages.yml");
+            messagesFile.renameTo(new File(getDataFolder(), "messages_old.yml"));
 
-        // Register commands
+            // delete all files in the data folder except for the old config and messages files
+            File[] files = getDataFolder().listFiles();
+            if (files != null) {
+                for (File file : files) {
+                    if (!file.getName().equals("config_old.yml") && !file.getName().equals("messages_old.yml")) {
+                        FileUtils.deleteQuietly(file);
+                    }
+                }
+            }
+
+            reload();
+        } else {
+            GitUtils.loadGitIgnore();
+            Messages.loadMessages();
+            Script.loadDefaultScript();
+            setupWebHook();
+        }
+
         Objects.requireNonNull(this.getCommand("minecicd")).setExecutor(new BaseCommand());
-
-        // Register tab completers
         Objects.requireNonNull(this.getCommand("minecicd")).setTabCompleter(new BaseCommandTabCompleter());
 
-        // async load the files cache
-        Bukkit.getScheduler().runTaskAsynchronously(this, () -> {
-            try {
-                GitManager.checkoutBranch();
-
-                boolean changes = GitManager.pullRepo();
-                if (changes) {
-                    FilesManager.mergeToLocal();
-                }
-            } catch (IOException | GitAPIException ignored) {
-            }
-
-            // check if pluginFolder/scripts exists
-            File scriptsFolder = new File(plugin.getDataFolder().getAbsolutePath() + "/scripts");
-            if (!scriptsFolder.exists()) {
-                try {
-                    scriptsFolder.mkdir();
-
-                    // copy example_script.txt from resources to pluginFolder/scripts
-                    InputStream in = plugin.getResource("example_script.txt");
-                    OutputStream out = null;
-                    try {
-                        out = new FileOutputStream(plugin.getDataFolder().getAbsolutePath() + "/scripts/example_script.txt");
-                    } catch (FileNotFoundException e) {
-                        File file = new File(plugin.getDataFolder().getAbsolutePath() + "/scripts/example_script.txt");
-                        file.createNewFile();
-                        out = new FileOutputStream(file);
-                    }
-
-                    byte[] buf = new byte[4096];
-                    int len;
-                    while ((len = in.read(buf)) > 0) {
-                        out.write(buf, 0, len);
-                    }
-
-                    in.close();
-                    out.close();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-
-        Messages.loadMessages();
-
-        bossBar.setVisible(false);
-        // continuous async timer to display BossBar when busy and hide when not
-        if (Config.getBoolean("bossbar")) {
-            Bukkit.getScheduler().runTaskTimerAsynchronously(this, task -> {
-                bossBar.setVisible(true);
-                if (busy) {
-                    for (Player p : Bukkit.getOnlinePlayers()) {
-                        if (p.hasPermission("minecicd.notify") && !muteList.contains(p.getUniqueId().toString())) {
-                            if (!bossBar.getPlayers().contains(p)) {
-                                bossBar.addPlayer(p);
-                            }
-                        } else {
-                            bossBar.removePlayer(p);
-                        }
-                    }
-                } else {
-                    bossBar.removeAll();
-                }
-            }, 20, 5);
+        try (Git ignored = Git.open(new File("."))) {
+        } catch (Exception ignored) {
         }
+    }
+
+    public static void setupWebHook() {
+        int port = config.getInt("webhooks.port");
+        String path = config.getString("webhooks.path");
+        if (port != 0) {
+            try {
+                String serverIp;
+                try {
+                    URL whatismyip = new URL("https://checkip.amazonaws.com");
+                    BufferedReader in = new BufferedReader(new InputStreamReader(whatismyip.openStream()));
+                    serverIp = in.readLine();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+
+                webServer = HttpServer.create(new InetSocketAddress(port), 0);
+                webServer.createContext("/" + path, new WebhookHandler());
+                webServer.setExecutor(null);
+                webServer.start();
+
+                log("MineCICD is now listening on: \"http://" + serverIp + ":" + port + "/" + path + "\"", Level.INFO);
+            } catch (IOException e) {
+                logError(e);
+            }
+        } else {
+            if (webServer != null) {
+                webServer.stop(0);
+                webServer = null;
+            }
+        }
+    }
+
+    public static void reload() {
+        plugin.saveDefaultConfig();
+        Config.reload();
+        Messages.loadMessages();
+        GitUtils.loadGitIgnore();
+        Script.loadDefaultScript();
+        setupWebHook();
     }
 
     @Override
     public void onDisable() {
+        for (String type : busyBars.keySet()) {
+            removeBar(type, 0);
+        }
+
         if (webServer != null) {
             webServer.stop(0);
             log("MineCICD stopped listening.", Level.INFO);
@@ -128,61 +128,62 @@ public final class MineCICD extends JavaPlugin {
         logger.log(level, l);
     }
 
-    public static void startWebServer() {
-        try {
-            int port = Config.getInt("webhook-port");
-            if (webServer != null) {
-                webServer.stop(0);
-                log("MineCICD stopped listening.", Level.INFO);
-            }
-            if (port != 0) {
+    public static void logError(Exception e) {
+        logger.log(Level.SEVERE, e.getMessage(), e);
+        StringBuilder stackTrace = new StringBuilder();
+        for (StackTraceElement element : e.getStackTrace()) {
+            stackTrace.append(element.toString()).append("\n");
+        }
+        logger.log(Level.SEVERE, stackTrace.toString());
+    }
 
-                URL whatismyip = new URL("https://checkip.amazonaws.com");
-                BufferedReader in = new BufferedReader(new InputStreamReader(whatismyip.openStream()));
-                String ip = in.readLine();
+    public static String addBar(String title, BarColor color, BarStyle style) {
+        if (!Config.getBoolean("bossbar.enabled")) return "";
+        String random = String.valueOf(System.currentTimeMillis());
 
-                String webhookPath = Config.getString("webhook-path");
-                if (webhookPath.startsWith("/")) {
-                    webhookPath = webhookPath.substring(1);
+        MineCICD.busyBars.put(random, Bukkit.createBossBar(title, color, style));
+
+        ArrayList<Player> players = new ArrayList<>(Bukkit.getOnlinePlayers());
+        players.removeIf(player -> !player.hasPermission("minecicd.notify"));
+
+        for (Player player : players) {
+            MineCICD.busyBars.get(random).addPlayer(player);
+        }
+
+        return random;
+    }
+
+    public static void changeBar(String type, String title, BarColor color, BarStyle style) {
+        if (!Config.getBoolean("bossbar.enabled")) return;
+        if (!MineCICD.busyBars.containsKey(type)) return;
+
+        MineCICD.busyBars.get(type).setTitle(title);
+        MineCICD.busyBars.get(type).setColor(color);
+        MineCICD.busyBars.get(type).setStyle(style);
+    }
+
+    public static void removeBar(String type, int delay) {
+        if (!Config.getBoolean("bossbar.enabled")) return;
+        if (!MineCICD.busyBars.containsKey(type)) return;
+
+        if (delay > 0) {
+            BossBar bar = MineCICD.busyBars.get(type);
+            BukkitTask task = Bukkit.getScheduler().runTaskTimer(MineCICD.plugin, () -> {
+                double currentProgress = bar.getProgress();
+                currentProgress -= (1.0 / (double) delay);
+                if (currentProgress < 0) {
+                    currentProgress = 0;
                 }
-
-                webServer = HttpServer.create(new InetSocketAddress(port), 0);
-                webServer.createContext("/" + webhookPath, new WebhookHandler());
-                webServer.setExecutor(null);
-                webServer.start();
-
-                log("MineCICD started listening on: http://" + ip + ":" + port + "/" + webhookPath, Level.INFO);
-            } else {
-                log("Webhook port is set to not start.", Level.INFO);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            log("Failed to start webhook server. Please check your config.yml.", Level.SEVERE);
-        }
-    }
-
-    public static String getCurrentCommit() {
-        try {
-            BufferedReader reader = new BufferedReader(new FileReader(plugin.getDataFolder().getAbsolutePath() + "/lastCommit.txt"));
-            String commit = reader.readLine();
-            reader.close();
-            return commit;
-        } catch (IOException ignored) {
-            return "null";
-        }
-    }
-
-    public static void setCurrentCommit(String commit) {
-        try {
-            File file = new File(plugin.getDataFolder().getAbsolutePath() + "/lastCommit.txt");
-            if (!file.exists()) {
-                file.createNewFile();
-            }
-
-            BufferedWriter writer = new BufferedWriter(new FileWriter(plugin.getDataFolder().getAbsolutePath() + "/lastCommit.txt"));
-            writer.write(commit);
-            writer.close();
-        } catch (IOException ignored) {
+                bar.setProgress(currentProgress);
+            }, 1, 1);
+            Bukkit.getScheduler().runTaskLater(MineCICD.plugin, () -> {
+                MineCICD.busyBars.get(type).removeAll();
+                MineCICD.busyBars.remove(type);
+                task.cancel();
+            }, delay);
+        } else {
+            MineCICD.busyBars.get(type).removeAll();
+            MineCICD.busyBars.remove(type);
         }
     }
 }

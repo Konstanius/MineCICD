@@ -3,113 +3,203 @@ package ml.konstanius.minecicd;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.revwalk.RevCommit;
 
+import javax.annotation.Nullable;
+import java.io.File;
 import java.util.ArrayList;
-import java.util.List;
-
-import static ml.konstanius.minecicd.MineCICD.localFiles;
 
 public class BaseCommandTabCompleter implements TabCompleter {
     @Override
-    public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
-        if (!Config.getBoolean("tab-completion")) {
-            return null;
-        }
-
-        List<String> unfiltered = getUnfiltered(sender, command, label, args);
+    public ArrayList<String> onTabComplete(CommandSender sender, Command command, String label, String[] args) {
+        ArrayList<String> unfiltered = getUnfiltered(sender, command, label, args);
         if (unfiltered == null) {
             return null;
         }
 
-        String lastArg = args[args.length - 1];
-        List<String> filtered = new java.util.ArrayList<>(List.of());
-        for (String arg : unfiltered) {
-            if (arg.startsWith(lastArg)) {
-                filtered.add(arg);
+        String filter = args[args.length - 1];
+        String argInputReplaced = filter.replace("\\", "/");
+        ArrayList<String> filtered = new java.util.ArrayList<>();
+
+        for (String argToFilter : unfiltered) {
+            String argToFilterReplaced = argToFilter.replace("\\", "/");
+            if (argToFilterReplaced.startsWith(argInputReplaced)) {
+                filtered.add(argToFilter);
             }
         }
         return filtered;
     }
 
-    public @Nullable List<String> getUnfiltered(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
+    public @Nullable ArrayList<String> getUnfiltered(CommandSender sender, Command command, String label, String[] args) {
         int argLength = args.length;
         if (argLength == 1) {
-            // Subcommands
-            List<String> list = new java.util.ArrayList<>(List.of("pull", "push", "add", "remove", "clone", "status", "reset", "revert", "log", "reload", "mute", "help", "script", "rollback"));
+            ArrayList<String> list = new java.util.ArrayList<>();
+            list.add("add");
+            list.add("remove");
+            list.add("pull");
+            list.add("push");
+            list.add("reset");
+            list.add("revert");
+            list.add("rollback");
+            list.add("log");
+            list.add("reload");
+            list.add("diff");
+            list.add("status");
+            list.add("help");
+            list.add("script");
+            list.add("resolve");
             list.removeIf(s -> !sender.hasPermission("minecicd." + s));
             return list;
-        } else {
-            String subCommand = args[0];
-            if (!sender.hasPermission("minecicd." + subCommand)) {
-                return List.of();
+        }
+
+        String subCommand = args[0];
+        if (!sender.hasPermission("minecicd." + subCommand)) {
+            return new java.util.ArrayList<>();
+        }
+
+        switch (subCommand) {
+            case "add": {
+                if (args.length != 2) {
+                    return new java.util.ArrayList<>();
+                }
+
+                String filter = args[1];
+                String[] children = filter.split("[/\\\\]");
+
+                File root = new File(new File(".").getAbsolutePath());
+                File current = root;
+                for (int i = 0; i < children.length - 1; i++) {
+                    String s = children[i];
+                    current = new File(current, s);
+                    if (!current.exists()) {
+                        return new ArrayList<>();
+                    }
+                }
+
+                // if it ends with "/" or "\", set current to the last child
+                if ((filter.endsWith("/") || filter.endsWith("\\")) && children.length > 0) {
+                    current = new File(current, children[children.length - 1]);
+                }
+
+                File[] list = current.listFiles();
+                if (list == null) {
+                    return new ArrayList<>();
+                }
+
+                ArrayList<String> returnable = new ArrayList<>();
+                for (File file : list) {
+                    if (file.getName().equals(".git")) continue;
+
+                    String relativePath = root.toPath().toAbsolutePath().relativize(file.toPath().toAbsolutePath()).toString();
+
+                    if (file.isDirectory()) {
+                        relativePath += File.separator;
+                    }
+
+                    returnable.add(relativePath);
+                }
+                return returnable;
             }
-            switch (subCommand) {
-                case "add" -> {
-                    if (argLength == 2) {
-                        String filter = args[1];
-                        List<String> returnable = new ArrayList<>();
-                        for (String file : localFiles) {
-                            if (file.startsWith(filter)) {
-                                // check if any slashes are after the filter + 1 index
-                                if (file.indexOf('/', filter.length() + 1) == -1) {
-                                    returnable.add(file);
-                                }
-                            }
-                        }
-                        return returnable;
-                    }
-                    return List.of();
+            case "remove": {
+                if (args.length != 2) {
+                    return new java.util.ArrayList<>();
                 }
-                case "remove" -> {
-                    if (argLength == 2) {
-                        String filter = args[1];
-                        List<String> returnable = new ArrayList<>();
-                        for (String file : MineCICD.repoFiles) {
-                            if (file.startsWith(filter)) {
-                                // check if any slashes are after the filter + 1 index
-                                if (file.indexOf('/', filter.length() + 1) == -1) {
-                                    returnable.add(file);
-                                }
-                            }
-                        }
-                        return returnable;
+
+                String filter = args[1];
+                String[] children = filter.split("[/\\\\]");
+
+                File root = new File(".");
+                File current = root;
+                for (int i = 0; i < children.length - 1; i++) {
+                    String s = children[i];
+                    current = new File(current, s);
+                    if (!current.exists()) {
+                        return new ArrayList<>();
                     }
-                    return List.of();
                 }
-                case "revert", "reset" -> {
-                    // Commit list
-                    if (argLength == 2) {
-                        return List.of(MineCICD.commitLog);
+
+                // if it ends with "/" or "\", set current to the last child
+                if (filter.endsWith("/") || filter.endsWith("\\")) {
+                    current = new File(current, children[children.length - 1]);
+                }
+
+                File[] list = current.listFiles();
+                if (list == null) {
+                    return new ArrayList<>();
+                }
+
+                ArrayList<String> returnable = new ArrayList<>();
+                for (File file : list) {
+                    if (file.getName().equals(".git")) continue;
+
+                    String relativePath = root.toPath().toAbsolutePath().relativize(file.toPath().toAbsolutePath()).toString();
+
+                    if (file.isDirectory()) {
+                        relativePath += File.separator;
                     }
-                    return List.of();
+
+                    returnable.add(relativePath);
                 }
-                case "log" -> {
-                    // Returns a number between 1 and amount / 10
-                    int amount = MineCICD.logSize;
-                    int pages = (int) Math.ceil((double) amount / 10);
-                    // add all from 1 to amount / 10
-                    List<String> list = new java.util.ArrayList<>(List.of());
+                return returnable;
+            }
+            case "diff": {
+                ArrayList<String> list = new ArrayList<>();
+                list.add("local");
+                list.add("remote");
+                return list;
+            }
+            case "resolve": {
+                ArrayList<String> list = new ArrayList<>();
+                list.add("merge-abort");
+                list.add("repo-reset");
+                list.add("reset-local-changes");
+                return list;
+            }
+            case "script": {
+                if (!Config.getBoolean("webhooks.allow-scripts")) {
+                    return new ArrayList<>();
+                }
+
+                File scriptsFolder = new File(MineCICD.plugin.getDataFolder().getAbsolutePath() + "/scripts");
+                if (!scriptsFolder.exists()) {
+                    return new ArrayList<>();
+                }
+
+                File[] list = scriptsFolder.listFiles();
+                if (list == null) {
+                    return new ArrayList<>();
+                }
+
+                ArrayList<String> returnable = new ArrayList<>();
+                for (File file : list) {
+                    if (file.getName().endsWith(".sh")) {
+                        returnable.add(file.getName());
+                    }
+                }
+                return returnable;
+            }
+            case "log": {
+                try (Git git = Git.open(new File("."))) {
+                    ArrayList<String> list = new ArrayList<>();
+
+                    Iterable<RevCommit> commits = git.log().call();
+                    for (RevCommit commit : commits) {
+                        list.add(commit.getName());
+                    }
+
+                    int pages = (int) Math.ceil((double) list.size() / 10);
                     for (int i = 1; i <= pages; i++) {
                         list.add(String.valueOf(i));
                     }
+
                     return list;
-                }
-                case "script" -> {
-                    // returns the name of scripts defined in plugin data folder / scripts / <name>.txt
-                    if (argLength == 2) {
-                        return new ArrayList<>(MineCICD.scripts);
-                    }
-                    return List.of();
-                }
-                case "mute" -> {
-                    // Returns true or false
-                    return List.of("true", "false");
+                } catch (Exception e) {
+                    return new ArrayList<>();
                 }
             }
+            default:
+                return new ArrayList<>();
         }
-
-        return List.of();
     }
 }

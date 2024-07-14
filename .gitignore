@@ -1,5 +1,1 @@
-# Project exclude paths
-/.gradle/
-/build/
-/build/classes/java/main/
-/src/main/java/ml/konstanius/minecicd/push.json
+/target/

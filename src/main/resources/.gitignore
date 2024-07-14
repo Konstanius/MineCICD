@@ -1,0 +1,48 @@
+# The .gitignore file for MineCICD.
+# By default, ALL files and directories are ignored!
+# This serves as a store for what files are added / ignored and may be edited manually or via the plugin.
+/*
+# MineCICD is priority EXCLUDED. It is not recommended to track it, as this could lead to security risks or other issues
+/plugins/MineCICD/**
+# The .gitignore is INCLUDED at all times
+!/.gitignore
+# The MineCICD-(version) jarfile should also be excluded, since tracking it will break the plugin operation
+/plugins/MineCICD-*.jar
+# PlugManX is also excluded, as it is not recommended to track it
+/plugins/PlugManX/**
+/plugins/PlugManX-*.jar
+/plugins/PlugMan/**
+/plugins/PlugMan-*.jar
+
+# Line 10-11 is used for INSERTING new files or directories to be unignored, done by MineCICD!
+# MineCICD GITIGNORE PART BEGIN MARKER
+# MineCICD GITIGNORE PART END MARKER
+
+# Any manual exclusions / inclusions shall be done below this line
+*.png
+*.dat
+*.log
+*.db
+*.sql
+*.sqlite
+*.zip
+*.tar
+*.gz
+*.bz2
+*.7z
+*.rar
+# JAR files are currently only experimentally supported
+# See the config option "experimental-jar-loading" and README for more information
+*.jar
+
+# The following files and directories are also priority excluded, as they are not recommended to be tracked
+/plugins/.paper-remapped/**
+/cache/**
+/versions/**
+/logs/**
+/world/**
+/world_nether/**
+/world_the_end/**
+/libraries/**
+/usercache.json
+/ops.json

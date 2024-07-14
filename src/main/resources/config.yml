@@ -1,79 +1,50 @@
-# Setup of the repository to sync with
-repository-url: "" # Without trailing slash (e.g.: https://github.com/Konstanius/MineCICD)
-token: "" # Fine-grained or full access token
-branch: "main" # Specify the branch to sync with, useful for test servers, then using a pull request to sync with the main server
+git:
+  # Username or token
+  user: ""
+  # Password or token (if using token, use it as both user and pass)
+  pass: ""
+  # Repository URL
+  repo: ""
+  # Selected branch, default is master or main
+  # Use this to set up development servers, production servers, and test servers and the like
+  # This has an effect on everything from pushing, pulling, and webhooks
+  branch: "master"
 
-# Setup of the webhook used to detect pushes
-webhook-port: 8080 # Set to 0 to disable
-webhook-path: "minecicd"
+# Whether experimental jar unloading and loading should be enabled
+# This requires PlugManX to be installed and working on your server
+# This is experimental and may cause issues!
+# Will inevitably cause a lot of issues if used on library or core plugins
+# Requires you to remove "*.jar" from the .gitignore file in your server root
+experimental-jar-loading: true
 
-# Configuration for the scope of the synchronization
-#####################################################################
-#####                          WARNING                          #####
-#####                                                           #####
-##### Files removed by these filters after having been added to #####
-##### Git can result in unpredictable behaviour. Decide before! #####
-#####################################################################
-enable-whitelist-filetypes: true
-whitelist-filetypes:
-  - ".yml"
-  - ".txt"
-  - ".json"
-  - ".properties"
-  - ".png"
-  - ".jar"
+bossbar:
+  # Whether to enable the boss bar
+  enabled: true
+  # How long the action result should be visible for, in ticks (20 ticks = 1 second)
+  # High values here WILL delay further commands of the same type
+  duration: 100
 
-enable-blacklist-filetypes: false
-blacklist-filetypes:
-  - ".dat"
+# Filtering in the config is obsolete with V2
+# See the .gitignore file in your server root for filtering
+# See https://git-scm.com/docs/gitignore for more information
 
-# Paths are measured from the root of the server
-# Check returns true if the paths starts with the given path
-# Blacklist overrides whitelist
-# If enable-whitelist-paths is true, only the whitelisted paths will be checked
-enable-whitelist-paths: false
-whitelist-paths:
-  - "/plugins/"
-  - "/spigot.yml"
-  - "/bukkit.yml"
-  - "/paper.yml"
+webhooks:
+  # Will listen at http://<your server ip>:<port>/<path>
+  # The port to listen on, set to 0 to disable
+  port: 8080
+  # The path to listen on
+  path: "minecicd"
 
-enable-blacklist-paths: false
-blacklist-paths:
-  - "/"
-
-# Webhook listener configuration
-# minecicd.notify is used for identifying who to notify when a webhook event is received
-# Order of execution:
-# 1. Commands / Scripts are executed with operator permissions
-# 2. One of the following is executed (in this order):
-#   - restart
-#   - global reload
-#   - individual reload
-allow-commands: true # This allows to execute arbitrary commands on the server, it is recommended to disable this on production servers
-allow-scripts: true # This allows to execute arbitrary CICD scripts on the server, it is recommended to disable this on production servers
-allow-individual-reload: true # This might not work with all plugins, issues will be displayed in the console. It is recommended to disable this on production servers
-allow-global-reload: false # This is highly discouraged, as it can cause issues with many plugins
-allow-restart: true
-# Execution order is top to bottom for commands, scripts and restart / reload
-# Webhook actions can be used by adding commit messages in the following format:
-# CICD <restart>
-# CICD <global-reload>
-# CICD <reload> <plugin-name> (Multiple plugins can be specified)
-# CICD <run> <command> (Multiple commands can be specified)
-# CICD <script> <script-name> (Multiple scripts can be specified)
-# <any other commit message>
-
-# Bossbar setup (No text color support)
-# Support for PINK, BLUE, RED, GREEN, YELLOW, PURPLE, WHITE
-bossbar-command-title: "MineCICD: Processing command (Git {action})..."
-bossbar-command-color: "YELLOW"
-bossbar-webhook-title: "MineCICD: Processing Webhook..."
-bossbar-webhook-color: "YELLOW"
-
-# Performance related configuration
-tab-completion: true # This will enable tab completion for the commands, recommended to disable on production servers
-# The bossbar is used to display the current activity of the plugin, hidden if no activity is present
-# It is only visible to users with the permission minecicd.notify
-# It can be toggled with the command /minecicd mute <true / false>
-bossbar: true # Recommended to disable on production servers, requires a restart for changes to take effect
+  # Webhook listener configuration
+  # minecicd.notify is used for identifying who to notify when a webhook event is received
+  # Order of execution:
+  # 1. Commands / Scripts are executed with operator permissions
+  # 2. One of the following is executed (in this order):
+  #   - restart
+  #   - global reload
+  #   - individual reload
+  allow-commands: true # This allows to execute arbitrary commands on the server, it is recommended to disable this on production servers
+  allow-scripts: true # This allows to execute arbitrary CICD scripts on the server, it is recommended to disable this on production servers
+  allow-individual-reload: true # This might not work with all plugins, issues will be displayed in the console. It is recommended to disable this on production servers
+  allow-global-reload: false # This is highly discouraged, as it can cause issues with many plugins
+  allow-restart: true
