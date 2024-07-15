@@ -13,7 +13,7 @@ import java.util.ArrayList;
 public class BaseCommandTabCompleter implements TabCompleter {
     @Override
     public ArrayList<String> onTabComplete(CommandSender sender, Command command, String label, String[] args) {
-        ArrayList<String> unfiltered = getUnfiltered(sender, command, label, args);
+        ArrayList<String> unfiltered = getUnfiltered(sender, args);
         if (unfiltered == null) {
             return null;
         }
@@ -31,7 +31,7 @@ public class BaseCommandTabCompleter implements TabCompleter {
         return filtered;
     }
 
-    public @Nullable ArrayList<String> getUnfiltered(CommandSender sender, Command command, String label, String[] args) {
+    public @Nullable ArrayList<String> getUnfiltered(CommandSender sender, String[] args) {
         int argLength = args.length;
         if (argLength == 1) {
             ArrayList<String> list = new java.util.ArrayList<>();

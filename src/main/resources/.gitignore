@@ -4,6 +4,8 @@
 /*
 # MineCICD is priority EXCLUDED. It is not recommended to track it, as this could lead to security risks or other issues
 /plugins/MineCICD/**
+# The secrets.yml file in the server root should also be excluded, as it contains sensitive information
+/secrets.ym**
 # The .gitignore is INCLUDED at all times
 !/.gitignore
 # The MineCICD-(version) jarfile should also be excluded, since tracking it will break the plugin operation

@@ -79,6 +79,25 @@ CICD script <script-name> (Multiple scripts via separate lines can be specified)
 <...>
 ```
 
+### Secrets
+Secrets are a way of storing sensitive information, such as passwords or API keys, in a dedicated, untracked file.<br>
+They are defined in the `/secrets.yml` directory, following the following format:
+```yaml
+# secrets.yml
+# Initial key is irrelevant, but must be unique
+1:
+  # File path is relative to the server root
+  file: "plugins/example-plugin-1/config.yml"
+  # Key-value pairs to replace in the file
+  database_password: "password"
+  database_username: "username"
+2:
+  file: "plugins/example-plugin-2/config.yml"
+  license_key: "license_key"
+```
+After modifying this file, make sure to reload the plugin with `/minecicd reload` to apply the changes.<br>
+These secrets will never be visible in the repository, but will be only be contained in the local server files.
+
 ### Scripts
 Scripts are a way of storing procedures of Minecraft commands and system shell commands.<br>
 They are defined in the `plugins/MineCICD/scripts` directory as `<script_name>.sh` files.<br>
