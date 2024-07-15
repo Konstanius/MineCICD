@@ -13,7 +13,7 @@
 <hr style="border: 1px solid green;">
 <h2 style="color:red">Updating from MineCICD 1.* to 2.0 will reset the config! See Migration steps below</h2>
 
-# MineCICD
+# MineCICD 2.1
 #### Minecraft Versions [Paper / Spigot] 1.8.* - 1.21.*
 ## Continuous Integration, Continuous Delivery - Now for Minecraft Servers
 
@@ -96,7 +96,9 @@ They are defined in the `/secrets.yml` directory, following the following format
   license_key: "license_key"
 ```
 After modifying this file, make sure to reload the plugin with `/minecicd reload` to apply the changes.<br>
-These secrets will never be visible in the repository, but will be only be contained in the local server files.
+These secrets will never be visible in the repository, but will be only be contained in the local server files.<br>
+Since Windows does not come with the `sed` command, MineCICD ships with a custom implementation for Windows: `minecicd_tools/windows-replace.exe`.<br>
+If your Linux installation does not have `sed`, MineCICD will use another custom implementation: `minecicd_tools/linux-replace.exe`.<br>
 
 ### Scripts
 Scripts are a way of storing procedures of Minecraft commands and system shell commands.<br>

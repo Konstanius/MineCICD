@@ -242,7 +242,7 @@ public abstract class GitUtils {
         }
     }
 
-    public static List<DiffEntry> getChangesBetween(Git git, ObjectId oldRevId, ObjectId newRevId) throws GitAPIException, IOException {
+    public static List<DiffEntry> getChangesBetween(Git git, ObjectId oldRevId, ObjectId newRevId) throws IOException {
         AbstractTreeIterator oldTreeParser = prepareTreeParser(git.getRepository(), oldRevId);
         AbstractTreeIterator newTreeParser = prepareTreeParser(git.getRepository(), newRevId);
         ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -253,7 +253,7 @@ public abstract class GitUtils {
         return diffFormatter.scan(oldTreeParser, newTreeParser);
     }
 
-    public static boolean pull() throws GitAPIException, URISyntaxException, IOException, InvalidConfigurationException {
+    public static boolean pull() throws GitAPIException, URISyntaxException, IOException, InvalidConfigurationException, InterruptedException {
         boolean ownsBusy = !busyLock;
         if (ownsBusy) busyLock = true;
 

@@ -65,7 +65,7 @@ public final class MineCICD extends JavaPlugin {
 
             try {
                 GitSecret.configureGitSecretFiltering(GitSecret.readFromSecretsStore());
-            } catch (IOException | InvalidConfigurationException e) {
+            } catch (IOException | InvalidConfigurationException | InterruptedException e) {
                 throw new RuntimeException(e);
             }
 
@@ -125,7 +125,7 @@ public final class MineCICD extends JavaPlugin {
 
         try {
             GitSecret.configureGitSecretFiltering(GitSecret.readFromSecretsStore());
-        } catch (IOException | InvalidConfigurationException e) {
+        } catch (IOException | InvalidConfigurationException | InterruptedException e) {
             throw new RuntimeException(e);
         }
 
