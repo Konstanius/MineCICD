@@ -3,6 +3,7 @@ package ml.konstanius.minecicd;
 import org.apache.commons.io.FileUtils;
 import org.bukkit.boss.BarColor;
 import org.bukkit.boss.BarStyle;
+import org.bukkit.configuration.InvalidConfigurationException;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.ResetCommand;
 import org.eclipse.jgit.api.RmCommand;
@@ -178,7 +179,7 @@ public abstract class GitUtils {
 
     public static boolean activeRepoExists() {
         File repoFolder = new File(".");
-        return repoFolder.exists() && new File(repoFolder, ".git").exists();
+        return repoFolder.exists() && new File(repoFolder, ".git").exists() && new File(repoFolder, ".gitignore").exists();
     }
 
     public static String getCurrentRevision() {
@@ -252,7 +253,7 @@ public abstract class GitUtils {
         return diffFormatter.scan(oldTreeParser, newTreeParser);
     }
 
-    public static boolean pull() throws GitAPIException, URISyntaxException, IOException {
+    public static boolean pull() throws GitAPIException, URISyntaxException, IOException, InvalidConfigurationException {
         boolean ownsBusy = !busyLock;
         if (ownsBusy) busyLock = true;
 
@@ -273,6 +274,7 @@ public abstract class GitUtils {
             String oldCommit = getCurrentRevision();
             if (!activeRepoExists()) {
                 try (Git git = Git.init().setDirectory(new File(".")).call()) {
+                    GitSecret.configureGitSecretFiltering(GitSecret.readFromSecretsStore());
                     git.remoteAdd().setName("origin").setUri(new URIish(repo)).call();
                     git.fetch().setCredentialsProvider(getCredentials()).call();
 
@@ -296,20 +298,31 @@ public abstract class GitUtils {
                                 if (files != null) {
                                     for (File file : files) {
                                         if (file.getName().endsWith(".jar") && !file.getName().contains("MineCICD") && !file.getName().contains("PlugMan")) {
+                                            String pluginStripped = file.getName();
+                                            // up until first "-" or " " or "." or "_"
+                                            int index = pluginStripped.indexOf("-");
+                                            if (index == -1) index = pluginStripped.indexOf(" ");
+                                            if (index == -1) index = pluginStripped.indexOf("_");
+                                            if (index == -1) index = pluginStripped.indexOf(".");
+                                            if (index != -1) {
+                                                pluginStripped = pluginStripped.substring(0, index);
+                                            }
+
                                             // run "plugman unload <plugin>"
-                                            String command = "plugman unload " + file.getName();
+                                            String command = "plugman unload " + pluginStripped;
                                             try {
+                                                String finalPluginStripped = pluginStripped;
                                                 MineCICD.plugin.getServer().getScheduler().callSyncMethod(MineCICD.plugin, () -> {
                                                     try {
                                                         MineCICD.plugin.getServer().dispatchCommand(MineCICD.plugin.getServer().getConsoleSender(), command);
                                                     } catch (Exception e) {
-                                                        MineCICD.log("Failed to unload plugin " + file.getName(), Level.SEVERE);
+                                                        MineCICD.log("Failed to unload plugin " + finalPluginStripped, Level.SEVERE);
                                                         MineCICD.logError(e);
                                                     }
                                                     return null;
                                                 }).get();
                                             } catch (Exception e) {
-                                                MineCICD.log("Failed to unload plugin " + file.getName(), Level.SEVERE);
+                                                MineCICD.log("Failed to unload plugin " + pluginStripped, Level.SEVERE);
                                                 MineCICD.logError(e);
                                             }
                                         }
@@ -327,20 +340,31 @@ public abstract class GitUtils {
                                 if (files != null) {
                                     for (File file : files) {
                                         if (file.getName().endsWith(".jar") && !file.getName().contains("MineCICD") && !file.getName().contains("PlugMan")) {
+                                            String pluginStripped = file.getName();
+                                            // up until first "-" or " " or "." or "_"
+                                            int index = pluginStripped.indexOf("-");
+                                            if (index == -1) index = pluginStripped.indexOf(" ");
+                                            if (index == -1) index = pluginStripped.indexOf("_");
+                                            if (index == -1) index = pluginStripped.indexOf(".");
+                                            if (index != -1) {
+                                                pluginStripped = pluginStripped.substring(0, index);
+                                            }
+
                                             // run "plugman unload <plugin>"
-                                            String command = "plugman load " + file.getName();
+                                            String command = "plugman load " + pluginStripped;
                                             try {
+                                                String finalPluginStripped = pluginStripped;
                                                 MineCICD.plugin.getServer().getScheduler().callSyncMethod(MineCICD.plugin, () -> {
                                                     try {
                                                         MineCICD.plugin.getServer().dispatchCommand(MineCICD.plugin.getServer().getConsoleSender(), command);
                                                     } catch (Exception e) {
-                                                        MineCICD.log("Failed to load plugin " + file.getName(), Level.SEVERE);
+                                                        MineCICD.log("Failed to load plugin " + finalPluginStripped, Level.SEVERE);
                                                         MineCICD.logError(e);
                                                     }
                                                     return null;
                                                 }).get();
                                             } catch (Exception e) {
-                                                MineCICD.log("Failed to load plugin " + file.getName(), Level.SEVERE);
+                                                MineCICD.log("Failed to load plugin " + pluginStripped, Level.SEVERE);
                                                 MineCICD.logError(e);
                                             }
                                         }
@@ -382,20 +406,32 @@ public abstract class GitUtils {
                             if (!toDisable.isEmpty()) {
                                 // Disable these plugins
                                 for (String plugin : toDisable) {
+                                    String pluginStripped = plugin;
+                                    // up until first "-" or " " or "." or "_"
+                                    int index = pluginStripped.indexOf("-");
+                                    if (index == -1) index = pluginStripped.indexOf(" ");
+                                    if (index == -1) index = pluginStripped.indexOf("_");
+                                    if (index == -1) index = pluginStripped.indexOf(".");
+                                    if (index != -1) {
+                                        pluginStripped = pluginStripped.substring(0, index);
+                                    } else {
+                                        pluginStripped = plugin;
+                                    }
                                     // run "plugman unload <plugin>"
-                                    String command = "plugman unload " + plugin;
+                                    String command = "plugman unload " + pluginStripped;
                                     try {
+                                        String finalPluginStripped = pluginStripped;
                                         MineCICD.plugin.getServer().getScheduler().callSyncMethod(MineCICD.plugin, () -> {
                                             try {
                                                 MineCICD.plugin.getServer().dispatchCommand(MineCICD.plugin.getServer().getConsoleSender(), command);
                                             } catch (Exception e) {
-                                                MineCICD.log("Failed to unload plugin " + plugin, Level.SEVERE);
+                                                MineCICD.log("Failed to unload plugin " + finalPluginStripped, Level.SEVERE);
                                                 MineCICD.logError(e);
                                             }
                                             return null;
                                         }).get();
                                     } catch (Exception e) {
-                                        MineCICD.log("Failed to unload plugin " + plugin, Level.SEVERE);
+                                        MineCICD.log("Failed to unload plugin " + pluginStripped, Level.SEVERE);
                                         MineCICD.logError(e);
                                     }
                                 }
@@ -411,20 +447,32 @@ public abstract class GitUtils {
                         if (!toEnable.isEmpty()) {
                             // Enable these plugins
                             for (String plugin : toEnable) {
+                                String pluginStripped = plugin;
+                                // up until first "-" or " " or "." or "_"
+                                int index = pluginStripped.indexOf("-");
+                                if (index == -1) index = pluginStripped.indexOf(" ");
+                                if (index == -1) index = pluginStripped.indexOf("_");
+                                if (index == -1) index = pluginStripped.indexOf(".");
+                                if (index != -1) {
+                                    pluginStripped = pluginStripped.substring(0, index);
+                                } else {
+                                    pluginStripped = plugin;
+                                }
                                 // run "plugman load <plugin>"
-                                String command = "plugman load " + plugin;
+                                String command = "plugman load " + pluginStripped;
                                 try {
+                                    String finalPluginStripped = pluginStripped;
                                     MineCICD.plugin.getServer().getScheduler().callSyncMethod(MineCICD.plugin, () -> {
                                         try {
                                             MineCICD.plugin.getServer().dispatchCommand(MineCICD.plugin.getServer().getConsoleSender(), command);
                                         } catch (Exception e) {
-                                            MineCICD.log("Failed to load plugin " + plugin, Level.SEVERE);
+                                            MineCICD.log("Failed to load plugin " + finalPluginStripped, Level.SEVERE);
                                             MineCICD.logError(e);
                                         }
                                         return null;
                                     }).get();
                                 } catch (Exception e) {
-                                    MineCICD.log("Failed to load plugin " + plugin, Level.SEVERE);
+                                    MineCICD.log("Failed to load plugin " + pluginStripped, Level.SEVERE);
                                     MineCICD.logError(e);
                                 }
                             }

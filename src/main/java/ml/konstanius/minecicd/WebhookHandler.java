@@ -224,11 +224,21 @@ public class WebhookHandler implements HttpHandler {
 
                             try {
                                 MineCICD.plugin.getServer().getScheduler().callSyncMethod(MineCICD.plugin, () -> {
-                                    String command = "plugman unload " + plugin;
+                                    String pluginStripped = plugin;
+                                    // up until first "-" or " " or "." or "_"
+                                    int index = pluginStripped.indexOf("-");
+                                    if (index == -1) index = pluginStripped.indexOf(" ");
+                                    if (index == -1) index = pluginStripped.indexOf("_");
+                                    if (index == -1) index = pluginStripped.indexOf(".");
+                                    if (index != -1) {
+                                        pluginStripped = pluginStripped.substring(0, index);
+                                    }
+
+                                    String command = "plugman unload " + pluginStripped;
                                     try {
                                         MineCICD.plugin.getServer().dispatchCommand(MineCICD.plugin.getServer().getConsoleSender(), command);
                                     } catch (Exception e) {
-                                        MineCICD.log("Failed to unload plugin " + plugin, Level.SEVERE);
+                                        MineCICD.log("Failed to unload plugin " + pluginStripped, Level.SEVERE);
                                         MineCICD.logError(e);
                                     }
 
@@ -238,11 +248,11 @@ public class WebhookHandler implements HttpHandler {
                                         MineCICD.logError(e);
                                     }
 
-                                    command = "plugman load " + plugin;
+                                    command = "plugman load " + pluginStripped;
                                     try {
                                         MineCICD.plugin.getServer().dispatchCommand(MineCICD.plugin.getServer().getConsoleSender(), command);
                                     } catch (Exception e) {
-                                        MineCICD.log("Failed to load plugin " + plugin, Level.SEVERE);
+                                        MineCICD.log("Failed to load plugin " + pluginStripped, Level.SEVERE);
                                         MineCICD.logError(e);
                                     }
                                     return null;

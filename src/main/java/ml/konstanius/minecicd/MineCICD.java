@@ -6,6 +6,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.boss.BarColor;
 import org.bukkit.boss.BarStyle;
 import org.bukkit.boss.BossBar;
+import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
@@ -61,6 +62,13 @@ public final class MineCICD extends JavaPlugin {
             GitUtils.loadGitIgnore();
             Messages.loadMessages();
             Script.loadDefaultScript();
+
+            try {
+                GitSecret.configureGitSecretFiltering(GitSecret.readFromSecretsStore());
+            } catch (IOException | InvalidConfigurationException e) {
+                throw new RuntimeException(e);
+            }
+
             setupWebHook();
         }
 
@@ -77,6 +85,11 @@ public final class MineCICD extends JavaPlugin {
         String path = config.getString("webhooks.path");
         if (port != 0) {
             try {
+                if (webServer != null) {
+                    webServer.stop(0);
+                    webServer = null;
+                }
+
                 String serverIp;
                 try {
                     URL whatismyip = new URL("https://checkip.amazonaws.com");
@@ -109,6 +122,13 @@ public final class MineCICD extends JavaPlugin {
         Messages.loadMessages();
         GitUtils.loadGitIgnore();
         Script.loadDefaultScript();
+
+        try {
+            GitSecret.configureGitSecretFiltering(GitSecret.readFromSecretsStore());
+        } catch (IOException | InvalidConfigurationException e) {
+            throw new RuntimeException(e);
+        }
+
         setupWebHook();
     }
 
