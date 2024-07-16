@@ -33,7 +33,7 @@ simultaneously, with the ability to track changes and apply them to all servers 
 1. Download the plugin from the latest release on GitHub (https://github.com/Konstanius/MineCICD/releases)
 2. Add the plugin into your plugins folder
 3. Restart the Minecraft server
-4. Create a Git repository (For e[README.md](README.md)xample on GitHub at https://github.com/new or similar)
+4. Create a Git repository (For example on GitHub at https://github.com/new or similar)
 5. Link the repository and your access credentials in the config
     - For GitHub, you must use a Personal Access Token
       - Get the token from https://github.com/settings/tokens
@@ -45,7 +45,7 @@ simultaneously, with the ability to track changes and apply them to all servers 
 7. Load the repository with `/minecicd pull`
 
 ### Now you are all set! - Time to start syncing
-- Add files to Git Tracking with `/minecicd add <file> <commit message>`
+- Add files to Git Tracking with `/minecicd add <file>`
 - Load changes made to the repository with `/minecicd pull`
 - (Optionally) push changes from your server to the repository with `/minecicd push <commit message>`
 
@@ -118,8 +118,8 @@ This will unload and load plugins if their jarfiles change, are removed. or new 
 ## Commands
 - `minecicd pull` - Pulls the latest changes from the remote or sets up the local repository if run for the first time.
 - `minecicd push <commit message>` - Pushes the latest changes to the remote.
-- `minecicd add <file / 'directory/'> <message>` - Adds a file or directory to the repository.
-- `minecicd remove <file / 'directory/'> <message>` - Removes a file or directory from the repository.
+- `minecicd add <file / 'directory/'>` - Adds a file or directory to the repository.
+- `minecicd remove <file / 'directory/'>` - Removes a file or directory from the repository.
 - `minecicd reset <commit hash / link>` - Hard resets the current branch to the specified commit. (Commits will not be reverted)
 - `minecicd rollback <dd.MM.yyyy HH:mm:ss>` - Hard resets the current branch to the latest commit before the specified date. (Commits will not be reverted)
 - `minecicd revert <commit hash / link>` - Attempts to revert a specific commits changes.
@@ -143,4 +143,4 @@ This will unload and load plugins if their jarfiles change, are removed. or new 
 5. Set up the new config with the token, repository url, branch name and other settings
 6. Run `/minecicd pull` to clone the repository
   - MineCICD should automatically detect which files were added to the repository
-  - If not, manually add them with `/minecicd add <file>`
+  - If not, manually add them with `/minecicd add <file / 'directory/'>`
