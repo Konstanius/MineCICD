@@ -13,7 +13,7 @@
 <hr style="border: 1px solid green;">
 <h2 style="color:red">Updating from MineCICD 1.* to 2.0 will reset the config! See Migration steps below</h2>
 
-# MineCICD 2.1
+# MineCICD 2.1.2
 #### Minecraft Versions [Paper / Spigot] 1.8.* - 1.21.*
 ## Continuous Integration, Continuous Delivery - Now for Minecraft Servers
 
