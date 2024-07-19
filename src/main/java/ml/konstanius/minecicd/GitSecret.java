@@ -130,9 +130,13 @@ public class GitSecret {
         // Check if sed is installed
         boolean sedInstalled = false;
         if (!SystemUtils.IS_OS_WINDOWS) {
-            Process process = Runtime.getRuntime().exec("which sed");
-            process.waitFor();
-            sedInstalled = process.exitValue() == 0;
+            try {
+                Process process = Runtime.getRuntime().exec("which sed");
+                process.waitFor();
+                sedInstalled = process.exitValue() == 0;
+            } catch (Exception ignored) {
+                // Probably barebones Linux in Docker -> No which, no sed
+            }
         }
 
         for (String filePath : secrets.keySet()) {
