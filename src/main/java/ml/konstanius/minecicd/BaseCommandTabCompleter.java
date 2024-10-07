@@ -58,12 +58,12 @@ public class BaseCommandTabCompleter implements TabCompleter {
             return new java.util.ArrayList<>();
         }
 
+        if (args.length != 2) {
+            return new ArrayList<>();
+        }
+
         switch (subCommand) {
             case "add": {
-                if (args.length != 2) {
-                    return new java.util.ArrayList<>();
-                }
-
                 String filter = args[1];
                 String[] children = filter.split("[/\\\\]");
 
@@ -102,10 +102,6 @@ public class BaseCommandTabCompleter implements TabCompleter {
                 return returnable;
             }
             case "remove": {
-                if (args.length != 2) {
-                    return new java.util.ArrayList<>();
-                }
-
                 String filter = args[1];
                 String[] children = filter.split("[/\\\\]");
 
