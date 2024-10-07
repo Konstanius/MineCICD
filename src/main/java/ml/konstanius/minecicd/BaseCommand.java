@@ -102,6 +102,7 @@ public class BaseCommand implements CommandExecutor {
                         }
                         addedAmount = GitUtils.add(current, author);
                     } catch (Exception e) {
+                        MineCICD.logError(e);
                         sender.sendMessage(getRichMessage("add-failed", true, new HashMap<String, String>() {{
                             put("error", e.getMessage());
                         }}));
@@ -163,6 +164,7 @@ public class BaseCommand implements CommandExecutor {
                         }
                         removedAmount = GitUtils.remove(current, author);
                     } catch (Exception e) {
+                        MineCICD.logError(e);
                         sender.sendMessage(getRichMessage("remove-failed", true, new HashMap<String, String>() {{
                             put("error", e.getMessage());
                         }}));
@@ -210,6 +212,7 @@ public class BaseCommand implements CommandExecutor {
                     try {
                         pulled = GitUtils.pull();
                     } catch (Exception e) {
+                        MineCICD.logError(e);
                         sender.sendMessage(getRichMessage("pull-failed", true, new HashMap<String, String>() {{
                             put("error", e.getMessage());
                         }}));
@@ -242,6 +245,7 @@ public class BaseCommand implements CommandExecutor {
                     try {
                         GitUtils.push(message, author);
                     } catch (Exception e) {
+                        MineCICD.logError(e);
                         sender.sendMessage(getRichMessage("push-failed", true, new HashMap<String, String>() {{
                             put("error", e.getMessage());
                         }}));
@@ -275,6 +279,7 @@ public class BaseCommand implements CommandExecutor {
                     try {
                         GitUtils.reset(commit);
                     } catch (Exception e) {
+                        MineCICD.logError(e);
                         sender.sendMessage(getRichMessage("reset-failed", true, new HashMap<String, String>() {{
                             put("error", e.getMessage());
                         }}));
@@ -308,6 +313,7 @@ public class BaseCommand implements CommandExecutor {
                     try {
                         GitUtils.revert(commit);
                     } catch (Exception e) {
+                        MineCICD.logError(e);
                         sender.sendMessage(getRichMessage("revert-failed", true, new HashMap<String, String>() {{
                             put("error", e.getMessage());
                         }}));
@@ -333,6 +339,7 @@ public class BaseCommand implements CommandExecutor {
                     try {
                         calendar.setTime(new SimpleDateFormat("dd.MM.yyyy HH:mm:ss").parse(dateTime));
                     } catch (Exception e) {
+                        MineCICD.logError(e);
                         sender.sendMessage(getRichMessage("rollback-invalid-date", true, new HashMap<String, String>() {{
                             put("label", label);
                         }}));
@@ -349,6 +356,7 @@ public class BaseCommand implements CommandExecutor {
                     try {
                         GitUtils.rollback(calendar);
                     } catch (Exception e) {
+                        MineCICD.logError(e);
                         sender.sendMessage(getRichMessage("rollback-failed", true, new HashMap<String, String>() {{
                             put("error", e.getMessage());
                         }}));
@@ -418,6 +426,7 @@ public class BaseCommand implements CommandExecutor {
                             messageBuilder.append(getMessage("log-list-end", false));
                             sender.sendMessage(Messages.messageToComponent(messageBuilder.toString()));
                         } catch (Exception e) {
+                            MineCICD.logError(e);
                             sender.sendMessage(getRichMessage("log-failed", true, new HashMap<String, String>() {{
                                 put("error", e.getMessage());
                             }}));
@@ -487,6 +496,7 @@ public class BaseCommand implements CommandExecutor {
                                 sender.sendMessage(Messages.messageToComponent(rawMsg));
                             }
                         } catch (Exception e) {
+                            MineCICD.logError(e);
                             sender.sendMessage(getRichMessage("log-failed", true, new HashMap<String, String>() {{
                                 put("error", e.getMessage());
                             }}));
@@ -503,7 +513,15 @@ public class BaseCommand implements CommandExecutor {
                         return;
                     }
 
-                    MineCICD.reload();
+                    try {
+                        MineCICD.reload();
+                    } catch (Exception e) {
+                        MineCICD.logError(e);
+                        sender.sendMessage(getRichMessage("reload-failed", true, new HashMap<String, String>() {{
+                            put("error", e.getMessage());
+                        }}));
+                        return;
+                    }
                     sender.sendMessage(getRichMessage("reload-success", true));
 
                     String bar = MineCICD.addBar(getCleanMessage("bossbar-reloaded", true), BarColor.GREEN, BarStyle.SOLID);
@@ -538,6 +556,7 @@ public class BaseCommand implements CommandExecutor {
                             }
                         }
                     } catch (Exception e) {
+                        MineCICD.logError(e);
                         sender.sendMessage(getRichMessage("diff-failed", true, new HashMap<String, String>() {{
                             put("error", e.getMessage());
                         }}));
@@ -591,6 +610,7 @@ public class BaseCommand implements CommandExecutor {
                     try (Git git = Git.open(new File("."))) {
                         remoteChanges = GitUtils.getRemoteChanges(git).size();
                     } catch (Exception e) {
+                        MineCICD.logError(e);
                         remoteChanges = -1;
                     }
 
@@ -626,6 +646,7 @@ public class BaseCommand implements CommandExecutor {
                     try {
                         Script.run(script);
                     } catch (Exception e) {
+                        MineCICD.logError(e);
                         sender.sendMessage(getRichMessage("script-failed", true, new HashMap<String, String>() {{
                             put("error", e.getMessage());
                         }}));
@@ -646,6 +667,7 @@ public class BaseCommand implements CommandExecutor {
                             try {
                                 GitUtils.mergeAbort();
                             } catch (Exception e) {
+                                MineCICD.logError(e);
                                 sender.sendMessage(getRichMessage("resolve-failed-merge-abort", true, new HashMap<String, String>() {{
                                     put("error", e.getMessage());
                                 }}));
@@ -660,6 +682,7 @@ public class BaseCommand implements CommandExecutor {
                             try {
                                 GitUtils.repoReset();
                             } catch (Exception e) {
+                                MineCICD.logError(e);
                                 sender.sendMessage(getRichMessage("resolve-failed-repo-reset", true, new HashMap<String, String>() {{
                                     put("error", e.getMessage());
                                 }}));
@@ -677,6 +700,7 @@ public class BaseCommand implements CommandExecutor {
 
                                 sender.sendMessage(getRichMessage("resolve-success-reset-local-changes", true));
                             } catch (Exception e) {
+                                MineCICD.logError(e);
                                 sender.sendMessage(getRichMessage("resolve-failed-reset-local-changes", true, new HashMap<String, String>() {{
                                     put("error", e.getMessage());
                                 }}));
