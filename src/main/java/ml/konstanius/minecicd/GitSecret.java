@@ -149,15 +149,15 @@ public class GitSecret {
             StringBuilder cleanCommand = new StringBuilder("\tclean = ");
             StringBuilder smudgeCommand = new StringBuilder("\tsmudge = ");
             if (SystemUtils.IS_OS_WINDOWS) {
-                cleanCommand.append(".\\\\minecicd_tools\\\\windows-replace.exe");
-                smudgeCommand.append(".\\\\minecicd_tools\\\\windows-replace.exe");
+                cleanCommand.append(".\\\\plugins\\\\MineCICD\\\\tools\\\\windows-replace.exe");
+                smudgeCommand.append(".\\\\plugins\\\\MineCICD\\\\tools\\\\windows-replace.exe");
             } else {
                 if (sedInstalled) {
                     cleanCommand.append(" sed");
                     smudgeCommand.append(" sed");
                 } else {
-                    cleanCommand.append(" ./minecicd_tools/linux-replace.exe");
-                    smudgeCommand.append(" ./minecicd_tools/linux-replace.exe");
+                    cleanCommand.append(" ./plugins/MineCICD/tools/linux-replace.exe");
+                    smudgeCommand.append(" ./plugins/MineCICD/tools/linux-replace.exe");
                 }
             }
 
@@ -188,13 +188,14 @@ public class GitSecret {
             return;
         }
 
-        // load the appropriate replace executable into the minecicd_tools directory
-        File minecicdToolsDir = new File(".", "minecicd_tools");
-        if (!minecicdToolsDir.exists()) {
-            minecicdToolsDir.mkdir();
+        // load the appropriate replace executable into the MineCICD/tools directory
+        File dataDir = MineCICD.plugin.getDataFolder();
+        File toolsDir = new File(dataDir, "tools");
+        if (!toolsDir.exists()) {
+            toolsDir.mkdirs();
         }
 
-        File replaceExecutable = new File(minecicdToolsDir, SystemUtils.IS_OS_WINDOWS ? "windows-replace.exe" : "linux-replace.exe");
+        File replaceExecutable = new File(toolsDir, SystemUtils.IS_OS_WINDOWS ? "windows-replace.exe" : "linux-replace.exe");
         if (replaceExecutable.exists()) {
             return;
         }
