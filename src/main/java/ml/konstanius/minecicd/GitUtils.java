@@ -9,6 +9,7 @@ import org.eclipse.jgit.api.ResetCommand;
 import org.eclipse.jgit.api.RmCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.NoHeadException;
+import org.eclipse.jgit.api.errors.RefAlreadyExistsException;
 import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.diff.DiffFormatter;
 import org.eclipse.jgit.lib.ObjectId;
@@ -289,6 +290,10 @@ public abstract class GitUtils {
                     if (!getLocalChanges().isEmpty() || newRepo) {
                         git.commit().setAuthor("MineCICD", "MineCICD").setMessage("MineCICD initial setup commit").call();
                         git.push().setCredentialsProvider(getCredentials()).call();
+                        try {
+                            git.branchCreate().setName(branch).call();
+                        } catch (RefAlreadyExistsException ignored) {
+                        }
                         git.checkout().setName(branch).call();
 
                         if (Config.getBoolean("experimental-jar-loading")) {
