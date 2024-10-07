@@ -77,13 +77,12 @@ public abstract class Script {
                                 break;
                             }
                         } else {
-                            int finalI1 = i;
+                            int finalI = i;
                             Bukkit.getScheduler().runTask(plugin, () -> {
                                 try {
                                     Bukkit.dispatchCommand(Bukkit.getConsoleSender(), line);
                                     result[0] = 0;
                                 } catch (Exception e) {
-                                    int finalI = finalI1;
                                     output[0] = getMessage(
                                             "script-error-console",
                                             true,
