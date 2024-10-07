@@ -6,3 +6,6 @@
 # Datasource local storage ignored files
 /dataSources/
 /dataSources.local.xml
+/dbnavigator.xml
+/git_toolbox_prj.xml
+/hybrisProjectSettings.xml
