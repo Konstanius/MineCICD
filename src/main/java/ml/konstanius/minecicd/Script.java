@@ -20,14 +20,16 @@ import static ml.konstanius.minecicd.MineCICD.plugin;
 
 public abstract class Script {
     public static void loadDefaultScript() {
-        File gitIgnoreFile = new File(new File("."), "example_script.sh");
-        if (gitIgnoreFile.exists()) return;
+        File scriptsDir = new File(plugin.getDataFolder(), "scripts");
+        File exampleScriptFile = new File(scriptsDir, "example_script.sh");
+        if (exampleScriptFile.exists()) return;
+        exampleScriptFile.getParentFile().mkdirs();
 
         InputStreamReader reader = new InputStreamReader(Objects.requireNonNull(MineCICD.plugin.getResource("example_script.sh")), StandardCharsets.UTF_8);
 
         Scanner scanner = new Scanner(reader);
         try {
-            Files.write(gitIgnoreFile.toPath(), scanner.useDelimiter("\\A").next().getBytes());
+            Files.write(exampleScriptFile.toPath(), scanner.useDelimiter("\\A").next().getBytes());
         } catch (IOException e) {
             MineCICD.log("Failed to write example_script.txt", Level.SEVERE);
             MineCICD.logError(e);
@@ -77,13 +79,12 @@ public abstract class Script {
                                 break;
                             }
                         } else {
-                            int finalI1 = i;
+                            int finalI = i;
                             Bukkit.getScheduler().runTask(plugin, () -> {
                                 try {
                                     Bukkit.dispatchCommand(Bukkit.getConsoleSender(), line);
                                     result[0] = 0;
                                 } catch (Exception e) {
-                                    int finalI = finalI1;
                                     output[0] = getMessage(
                                             "script-error-console",
                                             true,

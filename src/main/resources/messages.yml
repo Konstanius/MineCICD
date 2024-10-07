@@ -6,6 +6,7 @@ no-permission: "&cYou do not have permission to use this command."
 busy: "&cThe plugin is currently processing another command."
 
 reload-usage: "&cInvalid arguments. Usage: /{label} reload"
+reload-failed: "&cError reloading: {error}"
 reload-success: "&aConfiguration, messages, Webhook listener, and secrets reloaded successfully."
 
 pull-usage: "&cInvalid arguments. Usage: /{label} pull [force]"

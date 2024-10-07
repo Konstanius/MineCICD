@@ -97,8 +97,8 @@ They are defined in the `/secrets.yml` directory, following the following format
 ```
 After modifying this file, make sure to reload the plugin with `/minecicd reload` to apply the changes.<br>
 These secrets will never be visible in the repository, but will be only be contained in the local server files.<br>
-Since Windows does not come with the `sed` command, MineCICD ships with a custom implementation for Windows: `minecicd_tools/windows-replace.exe`.<br>
-If your Linux installation does not have `sed`, MineCICD will use another custom implementation: `minecicd_tools/linux-replace.exe`.<br>
+Since Windows does not come with the `sed` command, MineCICD ships with a custom implementation for Windows: `plugins/MineCICD/tools/windows-replace.exe`.<br>
+If your Linux installation does not have `sed`, MineCICD will use another custom implementation: `plugins/MineCICD/tools/linux-replace.exe`.<br>
 
 ### Scripts
 Scripts are a way of storing procedures of Minecraft commands and system shell commands.<br>
