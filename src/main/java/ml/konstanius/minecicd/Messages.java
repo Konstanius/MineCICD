@@ -193,6 +193,7 @@ public abstract class Messages {
 
     public static void loadMessages() {
         try {
+            messages.clear();
             YamlConfiguration config = new YamlConfiguration();
             config.load(new InputStreamReader(Objects.requireNonNull(MineCICD.plugin.getResource("messages.yml")), StandardCharsets.UTF_8));
 
@@ -227,6 +228,7 @@ public abstract class Messages {
             for (String key : config.getKeys(false)) {
                 if (!messages.containsKey(key)) {
                     MineCICD.log("Missing message key: " + key, Level.WARNING);
+                    messages.put(key, config.getString(key));
                 }
             }
         } catch (IOException | InvalidConfigurationException e) {
