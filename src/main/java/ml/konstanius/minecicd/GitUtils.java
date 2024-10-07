@@ -809,4 +809,21 @@ public abstract class GitUtils {
             return walk.parseCommit(commitId);
         }
     }
+
+    public static void setBranchIfInited() throws IOException, GitAPIException {
+        if (!activeRepoExists()) {
+            return;
+        }
+
+        try (Git git = Git.open(new File("."))) {
+            if (git.branchList().call().stream().noneMatch(ref -> ref.getName().equals("refs/heads/" + Config.getString("git.branch")))) {
+                try {
+                    git.branchCreate().setName(Config.getString("git.branch")).call();
+                } catch (RefAlreadyExistsException ignored) {
+                }
+            }
+
+            git.checkout().setName(Config.getString("git.branch")).call();
+        }
+    }
 }

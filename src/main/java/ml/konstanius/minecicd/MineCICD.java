@@ -13,6 +13,7 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.errors.GitAPIException;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -57,7 +58,11 @@ public final class MineCICD extends JavaPlugin {
                 }
             }
 
-            reload();
+            try {
+                reload();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
         } else {
             GitUtils.loadGitIgnore();
             Messages.loadMessages();
@@ -116,19 +121,19 @@ public final class MineCICD extends JavaPlugin {
         }
     }
 
-    public static void reload() {
+    public static void reload() throws GitAPIException, IOException, InvalidConfigurationException, InterruptedException {
         plugin.saveDefaultConfig();
+
+        for (String type : busyBars.keySet()) {
+            removeBar(type, 0);
+        }
+
         Config.reload();
         Messages.loadMessages();
         GitUtils.loadGitIgnore();
         Script.loadDefaultScript();
-
-        try {
-            GitSecret.configureGitSecretFiltering(GitSecret.readFromSecretsStore());
-        } catch (IOException | InvalidConfigurationException | InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-
+        GitUtils.setBranchIfInited();
+        GitSecret.configureGitSecretFiltering(GitSecret.readFromSecretsStore());
         setupWebHook();
     }
 
