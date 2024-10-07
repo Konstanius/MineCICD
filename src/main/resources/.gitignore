@@ -16,7 +16,6 @@
 /plugins/PlugMan/**
 /plugins/PlugMan-*.jar
 
-# Line 10-11 is used for INSERTING new files or directories to be unignored, done by MineCICD!
 # MineCICD GITIGNORE PART BEGIN MARKER
 # MineCICD GITIGNORE PART END MARKER
 

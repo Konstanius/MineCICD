@@ -35,7 +35,7 @@ public class WebhookHandler implements HttpHandler {
             StringBuilder sb = new StringBuilder();
             InputStream ios = t.getRequestBody();
             int i;
-            int max = 10000;
+            int max = 512000;
             while ((i = ios.read()) != -1 && max-- > 0) {
                 sb.append((char) i);
             }
