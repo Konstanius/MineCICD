@@ -1,5 +1,5 @@
 name: MineCICD
-version: '${project.version}'
+version: '2.1.4'
 main: ml.konstanius.minecicd.MineCICD
 api-version: '1.13'
 prefix: MineCICD
