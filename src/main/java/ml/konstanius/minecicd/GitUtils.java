@@ -68,6 +68,15 @@ public abstract class GitUtils {
         }
     }
 
+    public static int getIndex(List<String> list, String value) {
+        for (int i = 0; i < list.size(); i++) {
+            if (list.get(i).equals(value)) {
+                return i;
+            }
+        }
+        return 0;
+    }
+
     public static void allowInGitIgnore(String path, boolean isDirectory) throws IOException {
         String gitString = path.replace("\\", "/");
         if (isDirectory && !gitString.endsWith("/")) {
@@ -80,18 +89,9 @@ public abstract class GitUtils {
         }
 
         List<String> lines = Files.readAllLines(gitIgnoreFile.toPath());
-        // find markers
-        int endIndex = 0;
-        int startIndex = 0;
-        for (int i = 0; i < lines.size(); i++) {
-            if (lines.get(i).equals("# MineCICD GITIGNORE PART BEGIN MARKER")) {
-                startIndex = i;
-            }
-            if (lines.get(i).equals("# MineCICD GITIGNORE PART END MARKER")) {
-                endIndex = i;
-                break;
-            }
-        }
+
+        int endIndex = getIndex(lines, "# MineCICD GITIGNORE PART END MARKER");
+        int startIndex = getIndex(lines, "# MineCICD GITIGNORE PART BEGIN MARKER");
         if (endIndex == 0 || startIndex == 0) {
             throw new IllegalStateException("MineCICD PART markers not found in .gitignore");
         }
@@ -118,7 +118,7 @@ public abstract class GitUtils {
             }
         }
 
-        fixAndSaveGitIgnore(startIndex, endIndex, lines, gitIgnoreFile);
+        fixAndSaveGitIgnore(lines, gitIgnoreFile);
     }
 
     public static void removeFromGitIgnore(String path, boolean isDirectory) throws IOException {
@@ -134,18 +134,8 @@ public abstract class GitUtils {
 
         List<String> lines = Files.readAllLines(gitIgnoreFile.toPath());
 
-        // find markers
-        int endIndex = 0;
-        int startIndex = 0;
-        for (int i = 0; i < lines.size(); i++) {
-            if (lines.get(i).equals("# MineCICD GITIGNORE PART BEGIN MARKER")) {
-                startIndex = i;
-            }
-            if (lines.get(i).equals("# MineCICD GITIGNORE PART END MARKER")) {
-                endIndex = i;
-                break;
-            }
-        }
+        int endIndex = getIndex(lines, "# MineCICD GITIGNORE PART END MARKER");
+        int startIndex = getIndex(lines, "# MineCICD GITIGNORE PART BEGIN MARKER");
         if (endIndex == 0 || startIndex == 0) {
             throw new IllegalStateException("MineCICD PART markers not found in .gitignore");
         }
@@ -162,10 +152,22 @@ public abstract class GitUtils {
             }
         }
 
-        fixAndSaveGitIgnore(startIndex, endIndex, lines, gitIgnoreFile);
+        fixAndSaveGitIgnore(lines, gitIgnoreFile);
     }
 
-    public static void fixAndSaveGitIgnore(int startIndex, int endIndex,  List<String> fileLines, File gitIgnoreFile) throws IOException {
+    public static void fixAndSaveGitIgnore(List<String> fileLines, File gitIgnoreFile) throws IOException {
+        int autoStartIndex = getIndex(fileLines, "# MineCICD GITIGNORE AUTO BEGIN MARKER");
+        int autoEndIndex = getIndex(fileLines, "# MineCICD GITIGNORE AUTO END MARKER");
+        if (autoEndIndex == 0 || autoStartIndex == 0) {
+            throw new IllegalStateException("MineCICD AUTO markers not found in .gitignore");
+        }
+
+        // remove all between those markers
+        if (autoStartIndex + 1 < autoEndIndex) {
+            List<String> subList = fileLines.subList(autoStartIndex + 1, autoEndIndex);
+            subList.clear();
+        }
+
         // remove duplicates
         Set<String> set = new HashSet<>();
         ArrayList<String> newLines = new ArrayList<>();
@@ -175,28 +177,33 @@ public abstract class GitUtils {
             }
         }
 
-        int autoStartIndex = 0;
-        int autoEndIndex = 0;
-        for (int i = 0; i < newLines.size(); i++) {
-            if (newLines.get(i).equals("# MineCICD GITIGNORE AUTO BEGIN MARKER")) {
-                autoStartIndex = i;
-            }
-            if (newLines.get(i).equals("# MineCICD GITIGNORE AUTO END MARKER")) {
-                autoEndIndex = i;
-                break;
-            }
-        }
-        if (autoEndIndex == 0 || autoStartIndex == 0) {
-            throw new IllegalStateException("MineCICD AUTO markers not found in .gitignore");
-        }
+        int endIndex = getIndex(newLines, "# MineCICD GITIGNORE PART END MARKER");
+        int startIndex = getIndex(newLines, "# MineCICD GITIGNORE PART BEGIN MARKER");
 
-        // remove all between those markers
-        if (autoStartIndex + 1 < autoEndIndex) {
-            List<String> subList = newLines.subList(autoStartIndex + 1, autoEndIndex);
-            startIndex -= subList.size();
-            endIndex -= subList.size();
-            subList.clear();
-        }
+        // sort the sublist between markers
+        List<String> subListParted = newLines.subList(startIndex + 1, endIndex);
+        subListParted.sort((o1, o2) -> {
+            // sort, so that "a" is before "!a", but "b" is after "!a"
+            boolean o1Ex = o1.startsWith("!");
+            boolean o2Ex = o2.startsWith("!");
+
+            String o1Sub = o1Ex ? o1.substring(1) : o1;
+            String o2Sub = o2Ex ? o2.substring(1) : o2;
+
+            // remove trailing *
+            if (o1Sub.endsWith("*")) {
+                o1Sub = o1Sub.substring(0, o1Sub.length() - 1);
+            }
+            if (o2Sub.endsWith("*")) {
+                o2Sub = o2Sub.substring(0, o2Sub.length() - 1);
+            }
+
+            int compare = o1Sub.compareTo(o2Sub);
+            if (compare == 0) {
+                return Boolean.compare(o1Ex, o2Ex);
+            }
+            return compare;
+        });
 
         // Generate the rules for parent directory in / exclusions for EVERY line (if necessary)
         // Rules are as follows:
@@ -218,9 +225,7 @@ public abstract class GitUtils {
             if (parts.length == 2 && (line.startsWith("/") || line.startsWith("!/")) || parts.length == 1) {
                 continue;
             }
-            if (!line.endsWith("/")) {
-                parts = Arrays.copyOf(parts, parts.length - 1);
-            }
+            parts = Arrays.copyOf(parts, parts.length - 1);
 
             String parent = "";
             for (int j = 1; j < parts.length; j++) {
