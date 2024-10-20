@@ -6,7 +6,6 @@ import org.bukkit.boss.BarStyle;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.ResetCommand;
-import org.eclipse.jgit.api.RmCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.NoHeadException;
 import org.eclipse.jgit.api.errors.RefAlreadyExistsException;
@@ -93,6 +92,9 @@ public abstract class GitUtils {
                 break;
             }
         }
+        if (endIndex == 0 || startIndex == 0) {
+            throw new IllegalStateException("MineCICD PART markers not found in .gitignore");
+        }
 
         // allow this exact path
         String inclusionRule = "!/" + gitString;
@@ -116,16 +118,7 @@ public abstract class GitUtils {
             }
         }
 
-        // remove duplicates
-        Set<String> set = new HashSet<>();
-        ArrayList<String> newLines = new ArrayList<>();
-        for (String line : lines) {
-            if (line.isEmpty() || set.add(line)) {
-                newLines.add(line);
-            }
-        }
-
-        Files.write(gitIgnoreFile.toPath(), newLines);
+        fixAndSaveGitIgnore(startIndex, endIndex, lines, gitIgnoreFile);
     }
 
     public static void removeFromGitIgnore(String path, boolean isDirectory) throws IOException {
@@ -153,6 +146,9 @@ public abstract class GitUtils {
                 break;
             }
         }
+        if (endIndex == 0 || startIndex == 0) {
+            throw new IllegalStateException("MineCICD PART markers not found in .gitignore");
+        }
 
         // remove this exact path
         lines.add(endIndex, "/" + gitString);
@@ -166,13 +162,78 @@ public abstract class GitUtils {
             }
         }
 
+        fixAndSaveGitIgnore(startIndex, endIndex, lines, gitIgnoreFile);
+    }
+
+    public static void fixAndSaveGitIgnore(int startIndex, int endIndex,  List<String> fileLines, File gitIgnoreFile) throws IOException {
         // remove duplicates
         Set<String> set = new HashSet<>();
         ArrayList<String> newLines = new ArrayList<>();
-        for (String line : lines) {
+        for (String line : fileLines) {
             if (line.isEmpty() || set.add(line)) {
                 newLines.add(line);
             }
+        }
+
+        int autoStartIndex = 0;
+        int autoEndIndex = 0;
+        for (int i = 0; i < newLines.size(); i++) {
+            if (newLines.get(i).equals("# MineCICD GITIGNORE AUTO BEGIN MARKER")) {
+                autoStartIndex = i;
+            }
+            if (newLines.get(i).equals("# MineCICD GITIGNORE AUTO END MARKER")) {
+                autoEndIndex = i;
+                break;
+            }
+        }
+        if (autoEndIndex == 0 || autoStartIndex == 0) {
+            throw new IllegalStateException("MineCICD AUTO markers not found in .gitignore");
+        }
+
+        // remove all between those markers
+        if (autoStartIndex + 1 < autoEndIndex) {
+            List<String> subList = newLines.subList(autoStartIndex + 1, autoEndIndex);
+            startIndex -= subList.size();
+            endIndex -= subList.size();
+            subList.clear();
+        }
+
+        // Generate the rules for parent directory in / exclusions for EVERY line (if necessary)
+        // Rules are as follows:
+        // - Analyze each line
+        // - If it is NOT directly in root, add 2 rules before it:
+        // - 1. Include the parent directory (/parent/)
+        // - 2. Exclude the parent directory (/parent/*)
+        // - If it is directly in root, skip it
+        // Do this for all parent directories, until root is reached
+        ArrayList<String> toAddDirectories = new ArrayList<>();
+        HashSet<String> toAddDirectoriesSet = new HashSet<>();
+        for (int i = startIndex; i <= endIndex; i++) {
+            String line = newLines.get(i);
+            if (line.startsWith("#") || line.isEmpty()) {
+                continue;
+            }
+
+            String[] parts = line.split("/");
+            if (parts.length == 2 && (line.startsWith("/") || line.startsWith("!/")) || parts.length == 1) {
+                continue;
+            }
+            if (!line.endsWith("/")) {
+                parts = Arrays.copyOf(parts, parts.length - 1);
+            }
+
+            String parent = "";
+            for (int j = 1; j < parts.length; j++) {
+                parent += parts[j] + "/";
+                if (toAddDirectoriesSet.add(parent)) {
+                    toAddDirectories.add("!/" + parent);
+                    toAddDirectories.add("/" + parent + "*");
+                }
+            }
+        }
+
+        for (int i = toAddDirectories.size() - 1; i >= 0; i--) {
+            newLines.add(autoStartIndex + 1, toAddDirectories.get(i));
         }
 
         Files.write(gitIgnoreFile.toPath(), newLines);
@@ -604,6 +665,7 @@ public abstract class GitUtils {
             int before = getIncludedFiles().size();
 
             String relativePath = root.toPath().toAbsolutePath().relativize(file.toPath().toAbsolutePath()).toString();
+            relativePath = relativePath.replace("\\", "/");
             allowInGitIgnore(relativePath, file.isDirectory());
 
             try (Git git = Git.open(new File("."))) {
@@ -651,12 +713,12 @@ public abstract class GitUtils {
             int amountBefore = getIncludedFiles().size();
 
             String relativePath = root.toPath().toAbsolutePath().relativize(file.toPath().toAbsolutePath()).toString();
+            relativePath = relativePath.replace("\\", "/");
             removeFromGitIgnore(relativePath, file.isDirectory());
 
             int amountAfter;
             try (Git git = Git.open(new File("."))) {
-                RmCommand rm = git.rm().setCached(true).addFilepattern(relativePath);
-                rm.call();
+                git.rm().setCached(true).addFilepattern(relativePath).call();
                 RevCommit commit = git.commit().setAuthor(author, author).setAll(true).setMessage("MineCICD removed \"" + relativePath + "\"").call();
                 git.push().add(commit.getName()).setCredentialsProvider(getCredentials()).call();
                 amountAfter = getIncludedFiles().size();

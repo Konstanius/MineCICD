@@ -194,16 +194,16 @@ public abstract class Messages {
     public static void loadMessages() {
         try {
             messages.clear();
-            YamlConfiguration config = new YamlConfiguration();
-            config.load(new InputStreamReader(Objects.requireNonNull(MineCICD.plugin.getResource("messages.yml")), StandardCharsets.UTF_8));
+            YamlConfiguration pluginMessagesResource = new YamlConfiguration();
+            pluginMessagesResource.load(new InputStreamReader(Objects.requireNonNull(MineCICD.plugin.getResource("messages.yml")), StandardCharsets.UTF_8));
 
-            File messagesFile = new File(MineCICD.plugin.getDataFolder().getAbsolutePath(), "messages.yml");
-            if (!messagesFile.exists()) {
+            File pluginMessagesFile = new File(MineCICD.plugin.getDataFolder().getAbsolutePath(), "messages.yml");
+            if (!pluginMessagesFile.exists()) {
                 MineCICD.plugin.saveResource("messages.yml", false);
             }
 
             FileConfiguration messagesConfig = new YamlConfiguration();
-            messagesConfig.load(messagesFile);
+            messagesConfig.load(pluginMessagesFile);
 
             for (String key : messagesConfig.getKeys(false)) {
                 Object value = messagesConfig.get(key);
@@ -225,10 +225,10 @@ public abstract class Messages {
             }
 
             // check if any keys are missing
-            for (String key : config.getKeys(false)) {
+            for (String key : pluginMessagesResource.getKeys(false)) {
                 if (!messages.containsKey(key)) {
                     MineCICD.log("Missing message key: " + key, Level.WARNING);
-                    messages.put(key, config.getString(key));
+                    messages.put(key, pluginMessagesResource.getString(key));
                 }
             }
         } catch (IOException | InvalidConfigurationException e) {

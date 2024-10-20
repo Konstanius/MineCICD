@@ -16,6 +16,11 @@
 /plugins/PlugMan/**
 /plugins/PlugMan-*.jar
 
+# Auto-generated rules for nested files / directories
+# MineCICD GITIGNORE AUTO BEGIN MARKER
+# MineCICD GITIGNORE AUTO END MARKER
+
+# Inclusions / Exclusions done manually in this file or through plugin commands
 # MineCICD GITIGNORE PART BEGIN MARKER
 # MineCICD GITIGNORE PART END MARKER
 
