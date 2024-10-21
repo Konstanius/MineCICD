@@ -1,28 +1,38 @@
 # The .gitignore file for MineCICD.
 # By default, ALL files and directories are ignored!
 # This serves as a store for what files are added / ignored and may be edited manually or via the plugin.
-/*
+*
+!*/
+
+# Inclusions / Exclusions done manually in this file or through plugin commands
+# MineCICD GITIGNORE PART BEGIN MARKER
+# MineCICD GITIGNORE PART END MARKER
+
 # MineCICD is priority EXCLUDED. It is not recommended to track it, as this could lead to security risks or other issues
 /plugins/MineCICD/**
+
 # The secrets.yml file in the server root should also be excluded, as it contains sensitive information
 /secrets.ym**
+
 # The .gitignore is INCLUDED at all times
 !/.gitignore
+
 # The MineCICD-(version) jarfile should also be excluded, since tracking it will break the plugin operation
 /plugins/MineCICD-*.jar
+
 # PlugManX is also excluded, as it is not recommended to track it
 /plugins/PlugManX/**
 /plugins/PlugManX-*.jar
 /plugins/PlugMan/**
 /plugins/PlugMan-*.jar
 
-# Auto-generated rules for nested files / directories
-# MineCICD GITIGNORE AUTO BEGIN MARKER
-# MineCICD GITIGNORE AUTO END MARKER
-
-# Inclusions / Exclusions done manually in this file or through plugin commands
-# MineCICD GITIGNORE PART BEGIN MARKER
-# MineCICD GITIGNORE PART END MARKER
+# For IDEs, the following files are excluded, as they are not recommended to be tracked
+/.idea/**
+/.vscode/**
+/.project
+/.classpath
+/.settings/**
+/.iml
 
 # Any manual exclusions / inclusions shall be done below this line
 *.png
@@ -37,18 +47,25 @@
 *.bz2
 *.7z
 *.rar
+*.old
+*.bak
+
 # JAR files are currently only experimentally supported
 # See the config option "experimental-jar-loading" and README for more information
 *.jar
 
 # The following files and directories are also priority excluded, as they are not recommended to be tracked
-/plugins/.paper-remapped/**
 /cache/**
-/versions/**
+/libraries/**
 /logs/**
+/plugins/.paper-remapped/**
+/versions/**
 /world/**
 /world_nether/**
 /world_the_end/**
-/libraries/**
-/usercache.json
+/banned-ips.json
+/banned-players.json
 /ops.json
+/permissions.yml
+/usercache.json
+/whitelist.json
