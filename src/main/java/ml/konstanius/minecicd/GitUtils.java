@@ -6,7 +6,6 @@ import org.bukkit.boss.BarStyle;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.ResetCommand;
-import org.eclipse.jgit.api.RmCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.NoHeadException;
 import org.eclipse.jgit.api.errors.RefAlreadyExistsException;
@@ -69,10 +68,19 @@ public abstract class GitUtils {
         }
     }
 
+    public static int getIndex(List<String> list, String value) {
+        for (int i = 0; i < list.size(); i++) {
+            if (list.get(i).equals(value)) {
+                return i;
+            }
+        }
+        return 0;
+    }
+
     public static void allowInGitIgnore(String path, boolean isDirectory) throws IOException {
         String gitString = path.replace("\\", "/");
-        if (isDirectory && !gitString.endsWith("/")) {
-            gitString += "/";
+        if (isDirectory) {
+            gitString = gitString.replaceAll("/\\*$", "") + "/*";
         }
 
         File gitIgnoreFile = new File(new File("."), ".gitignore");
@@ -81,57 +89,37 @@ public abstract class GitUtils {
         }
 
         List<String> lines = Files.readAllLines(gitIgnoreFile.toPath());
-        // find markers
-        int endIndex = 0;
-        int startIndex = 0;
-        for (int i = 0; i < lines.size(); i++) {
-            if (lines.get(i).equals("# MineCICD GITIGNORE PART BEGIN MARKER")) {
-                startIndex = i;
-            }
-            if (lines.get(i).equals("# MineCICD GITIGNORE PART END MARKER")) {
-                endIndex = i;
-                break;
+
+        int endIndex = getIndex(lines, "# MineCICD GITIGNORE PART END MARKER");
+        int startIndex = getIndex(lines, "# MineCICD GITIGNORE PART BEGIN MARKER");
+        if (endIndex == 0 || startIndex == 0) {
+            throw new IllegalStateException("MineCICD PART markers not found in .gitignore");
+        }
+
+        // remove whatever excludes within the path
+        String trimStart = gitString;
+        if (isDirectory) {
+            trimStart = trimStart.substring(0, trimStart.length() - 2);
+        }
+        for (int i = startIndex; i < endIndex + 1; i++) {
+            if (lines.get(i).startsWith("!/" + trimStart) || lines.get(i).startsWith("/" + trimStart)) {
+                lines.remove(i);
+                i--;
+                endIndex--;
             }
         }
 
         // allow this exact path
-        String inclusionRule = "!/" + gitString;
+        String inclusionRule = "!/" + gitString + "*";
         lines.add(startIndex + 1, inclusionRule);
 
-        // remove whatever includes within the path
-        for (int i = startIndex + 2; i < endIndex + 1; i++) {
-            if (lines.get(i).startsWith(inclusionRule)) {
-                lines.remove(i);
-                i--;
-                endIndex--;
-            }
-        }
-
-        // remove whatever excludes within the path
-        for (int i = startIndex; i < endIndex + 1; i++) {
-            if (lines.get(i).startsWith("/" + gitString)) {
-                lines.remove(i);
-                i--;
-                endIndex--;
-            }
-        }
-
-        // remove duplicates
-        Set<String> set = new HashSet<>();
-        ArrayList<String> newLines = new ArrayList<>();
-        for (String line : lines) {
-            if (line.isEmpty() || set.add(line)) {
-                newLines.add(line);
-            }
-        }
-
-        Files.write(gitIgnoreFile.toPath(), newLines);
+        fixAndSaveGitIgnore(lines, gitIgnoreFile);
     }
 
     public static void removeFromGitIgnore(String path, boolean isDirectory) throws IOException {
         String gitString = path.replace("\\", "/");
-        if (isDirectory && !gitString.endsWith("/")) {
-            gitString += "/";
+        if (isDirectory) {
+            gitString = gitString.replaceAll("/\\*$", "") + "/*";
         }
 
         File gitIgnoreFile = new File(new File("."), ".gitignore");
@@ -141,39 +129,70 @@ public abstract class GitUtils {
 
         List<String> lines = Files.readAllLines(gitIgnoreFile.toPath());
 
-        // find markers
-        int endIndex = 0;
-        int startIndex = 0;
-        for (int i = 0; i < lines.size(); i++) {
-            if (lines.get(i).equals("# MineCICD GITIGNORE PART BEGIN MARKER")) {
-                startIndex = i;
-            }
-            if (lines.get(i).equals("# MineCICD GITIGNORE PART END MARKER")) {
-                endIndex = i;
-                break;
-            }
+        int endIndex = getIndex(lines, "# MineCICD GITIGNORE PART END MARKER");
+        int startIndex = getIndex(lines, "# MineCICD GITIGNORE PART BEGIN MARKER");
+        if (endIndex == 0 || startIndex == 0) {
+            throw new IllegalStateException("MineCICD PART markers not found in .gitignore");
         }
 
-        // remove this exact path
-        lines.add(endIndex, "/" + gitString);
-
         // remove whatever else includes within this path
+        String trimStart = gitString;
+        if (isDirectory) {
+            trimStart = trimStart.substring(0, trimStart.length() - 2);
+        }
         for (int i = startIndex; i < endIndex; i++) {
-            if (lines.get(i).startsWith("!/" + gitString)) {
+            if (lines.get(i).startsWith("!/" + trimStart) || lines.get(i).startsWith("/" + trimStart)) {
                 lines.remove(i);
                 i--;
                 endIndex--;
             }
         }
 
+        lines.add(endIndex, "/" + gitString);
+        if (isDirectory) {
+            lines.add(endIndex, "!/" + gitString + "/");
+        }
+
+        fixAndSaveGitIgnore(lines, gitIgnoreFile);
+    }
+
+    public static void fixAndSaveGitIgnore(List<String> fileLines, File gitIgnoreFile) throws IOException {
         // remove duplicates
         Set<String> set = new HashSet<>();
         ArrayList<String> newLines = new ArrayList<>();
-        for (String line : lines) {
+        for (String line : fileLines) {
             if (line.isEmpty() || set.add(line)) {
                 newLines.add(line);
             }
         }
+
+        int endIndex = getIndex(newLines, "# MineCICD GITIGNORE PART END MARKER");
+        int startIndex = getIndex(newLines, "# MineCICD GITIGNORE PART BEGIN MARKER");
+
+        // sort the sublist between markers
+        List<String> subListParted = newLines.subList(startIndex + 1, endIndex);
+        subListParted.sort((o1, o2) -> {
+            // sort, so that "a" is before "!a", but "b" is after "!a"
+            boolean o1Ex = o1.startsWith("!");
+            boolean o2Ex = o2.startsWith("!");
+
+            String o1Sub = o1Ex ? o1.substring(1) : o1;
+            String o2Sub = o2Ex ? o2.substring(1) : o2;
+
+            // remove trailing *
+            if (o1Sub.endsWith("*")) {
+                o1Sub = o1Sub.substring(0, o1Sub.length() - 1);
+            }
+            if (o2Sub.endsWith("*")) {
+                o2Sub = o2Sub.substring(0, o2Sub.length() - 1);
+            }
+
+            int compare = o1Sub.compareTo(o2Sub);
+            if (compare == 0) {
+                return Boolean.compare(o1Ex, o2Ex);
+            }
+            return compare;
+        });
 
         Files.write(gitIgnoreFile.toPath(), newLines);
     }
@@ -604,6 +623,7 @@ public abstract class GitUtils {
             int before = getIncludedFiles().size();
 
             String relativePath = root.toPath().toAbsolutePath().relativize(file.toPath().toAbsolutePath()).toString();
+            relativePath = relativePath.replace("\\", "/");
             allowInGitIgnore(relativePath, file.isDirectory());
 
             try (Git git = Git.open(new File("."))) {
@@ -651,12 +671,12 @@ public abstract class GitUtils {
             int amountBefore = getIncludedFiles().size();
 
             String relativePath = root.toPath().toAbsolutePath().relativize(file.toPath().toAbsolutePath()).toString();
-            removeFromGitIgnore(relativePath, file.isDirectory());
+            relativePath = relativePath.replace("\\", "/");
 
             int amountAfter;
             try (Git git = Git.open(new File("."))) {
-                RmCommand rm = git.rm().setCached(true).addFilepattern(relativePath);
-                rm.call();
+                git.rm().setCached(true).addFilepattern(relativePath).call();
+                removeFromGitIgnore(relativePath, file.isDirectory());
                 RevCommit commit = git.commit().setAuthor(author, author).setAll(true).setMessage("MineCICD removed \"" + relativePath + "\"").call();
                 git.push().add(commit.getName()).setCredentialsProvider(getCredentials()).call();
                 amountAfter = getIncludedFiles().size();

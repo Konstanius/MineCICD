@@ -48,3 +48,8 @@ webhooks:
   allow-individual-reload: true # This might not work with all plugins, issues will be displayed in the console. It is recommended to disable this on production servers
   allow-global-reload: false # This is highly discouraged, as it can cause issues with many plugins
   allow-restart: true
+
+# DO NOT CHANGE THIS
+# Format: 1.2.3    ->  10203
+# Format: 11.22.33 -> 112233
+version: 20200
