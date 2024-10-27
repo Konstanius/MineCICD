@@ -60,6 +60,7 @@ public final class MineCICD extends JavaPlugin {
 
             try {
                 reload();
+                Migration.migrate();
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }

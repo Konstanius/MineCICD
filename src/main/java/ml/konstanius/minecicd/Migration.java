@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
+import java.util.logging.Level;
 
 public class Migration {
     public static void migrate() throws IOException, InvalidConfigurationException {
@@ -18,7 +19,12 @@ public class Migration {
 
         if (fileConfigVersion < pluginConfigVersion) {
             if (fileConfigVersion < 20200) {
-                // TODO migrate to 2.2.0
+                MineCICD.log("MineCICD cannot self migrate from PRE-2.2.0 Versions.", Level.SEVERE);
+                MineCICD.log("Please change or regenerate your .gitignore file (See https://github.com/Konstanius/MineCICD/blob/master/src/main/resources/.gitignore)", Level.SEVERE);
+                MineCICD.log("Then delete the config.yml and restart the server.", Level.SEVERE);
+                MineCICD.log("MineCICD will now disable itself.", Level.SEVERE);
+                MineCICD.plugin.getPluginLoader().disablePlugin(MineCICD.plugin);
+                return;
             }
         }
     }
