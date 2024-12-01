@@ -59,13 +59,10 @@ public class GitSecret {
 
             String filePath = section.getString("file");
             if (filePath == null) {
-                throw new InvalidConfigurationException("Secrets must have a file");
+                throw new InvalidConfigurationException("Every secrets block must have a file");
             }
             if (filePath.contains("'")) {
                 throw new InvalidConfigurationException("Secrets file paths cannot contain the single quote character");
-            }
-            if (filePath.contains(" ")) {
-                throw new InvalidConfigurationException("Secrets file paths cannot contain spaces");
             }
 
             Set<String> keys = section.getKeys(false);
@@ -77,7 +74,7 @@ public class GitSecret {
                 String secret = section.getString(secretIdentifier);
 
                 if (secret == null) {
-                    throw new InvalidConfigurationException("Secrets must have a value");
+                    throw new InvalidConfigurationException("Every secret must have a value");
                 }
                 if (secretIdentifier.contains("'") || secret.contains("'")) {
                     throw new InvalidConfigurationException("Secrets and their identifier cannot contain the single quote character");

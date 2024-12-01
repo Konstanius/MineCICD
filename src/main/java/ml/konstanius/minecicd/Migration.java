@@ -26,6 +26,12 @@ public class Migration {
                 MineCICD.plugin.getPluginLoader().disablePlugin(MineCICD.plugin);
                 return;
             }
+
+            if (fileConfigVersion < 20201) {
+                // no migration changes needed, just update the version
+                MineCICD.config.set("version", 20201);
+                MineCICD.plugin.saveConfig();
+            }
         }
     }
 }

@@ -20,11 +20,11 @@ push-usage: "&cInvalid arguments. Usage: /{label} push <commit message>"
 push-failed: "&cError pushing repo: {error}"
 push-success: "&aRepo changes pushed successfully."
 
-add-usage: "&cInvalid arguments. Usage: /{label} add <file / 'directory/'> <message> (trailing slash is required for directories)"
+add-usage: "&cInvalid arguments. Usage: /{label} add <file / 'directory/'> (trailing slash is required for directories)"
 add-failed: "&cError adding file(s): {error}"
 add-success: "&aAdded {amount} new file(s) to Git tracking."
 
-remove-usage: "&cInvalid arguments. Usage: /{label} remove <file / 'directory/'> <message> (trailing slash is required for directories)"
+remove-usage: "&cInvalid arguments. Usage: /{label} remove <file / 'directory/'> (trailing slash is required for directories)"
 remove-failed: "&cError removing file(s): {error}"
 remove-success: "&aRemoved {amount} file(s) from Git tracking."
 
@@ -69,8 +69,8 @@ invalid-subcommand: "&c Unknown command. Use /{label} help for a list of command
 help:
   - "&a/{label} pull &7- &bPulls the latest changes from the remote or sets up the local repository if run for the first time."
   - "&a/{label} push <commit message> &7- &bPushes the latest changes to the remote."
-  - "&a/{label} add <file / 'directory/'> <message> &7- &bAdds a file or directory to the repository."
-  - "&a/{label} remove <file / 'directory/'> <message> &7- &bRemoves a file or directory from the repository."
+  - "&a/{label} add <file / 'directory/'> &7- &bAdds a file or directory to the repository."
+  - "&a/{label} remove <file / 'directory/'> &7- &bRemoves a file or directory from the repository."
   - "&a/{label} reset <commit hash / link> &7- &bHard resets the current branch to the specified commit. (Commits will not be reverted)"
   - "&a/{label} rollback <dd.MM.yyyy HH:mm:ss> &7- &bHard resets the current branch to the latest commit before the specified date. (Commits will not be reverted)"
   - "&a/{label} revert <commit hash / link> &7- &bAttempts to revert a specific commits changes."

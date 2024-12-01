@@ -84,16 +84,19 @@ Secrets are a way of storing sensitive information, such as passwords or API key
 They are defined in the `/secrets.yml` directory, following the following format:
 ```yaml
 # secrets.yml
-# Initial key is irrelevant, but must be unique
+# For each file, create an index here
+# (It is not used for anything, only to uniquely identify each secrets config block)
 1:
-  # File path is relative to the server root
-  file: "plugins/example-plugin-1/config.yml"
-  # Key-value pairs to replace in the file
-  database_password: "password"
-  database_username: "username"
+   # Each block needs to have its file path specified
+   file: "plugins/example-plugin-1/config.yml"
+   # Add secrets for each block
+   # the key (before the ":" will be the value that replaces the secret)
+   # the value (after the ":") will be the actual secret
+   database_password: "password"
+   database_username: "username"
 2:
-  file: "plugins/example-plugin-2/config.yml"
-  license_key: "license_key"
+   file: "plugins/example-plugin-2/config.yml"
+   license_key: "license_key"
 ```
 After modifying this file, make sure to reload the plugin with `/minecicd reload` to apply the changes.<br>
 These secrets will never be visible in the repository, but will be only be contained in the local server files.<br>
